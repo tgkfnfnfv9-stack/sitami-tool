@@ -175,6 +175,9 @@
   .sheet .mt td.blk{height:72px}
   .sheet .mt td.list{vertical-align:top;font-size:10.5px;line-height:1.5;padding:5px 7px}
   .sheet .li{display:flex}
+  .sheet .two{display:flex;flex-direction:column;gap:6px}
+  .sheet .two div{min-height:14px}
+  .sheet .two div+div{border-top:1px dotted #aaa;padding-top:5px}
   .sheet .li span:first-child{flex:0 0 auto}
   .sheet .mt tr.mrow td{border-top:1.6px solid #000}
   .sheet .site{margin-top:-1px}
@@ -395,6 +398,8 @@
         <div class="field"><label>付属品</label><textarea data-m="acc" rows="5" placeholder="9吋スクロールチャック（キタガワ JN09T）&#10;固定具&#10;ロータリードレッサー"></textarea></div>
       </div>
       <div class="hint" style="margin-top:6px">1行に1項目ずつ入力すると帳票で見やすくなります</div>
+      <div class="sub-h">機械状態</div>
+      <div class="field"><textarea data-m="cond" rows="4" placeholder="通電可・各軸動作OK&#10;外観良好（塗装ハゲ少々）&#10;オイル漏れなし&#10;摺動面キズなし"></textarea></div>
       <div class="sub-h">確認</div>
       <div class="grid2">
         <div class="field">
@@ -436,7 +441,7 @@
 
   const KEYS=["konNo","inspectDate","tanto","inspector","clientCompany","clientPerson","siteName","sitePerson","siteAddress","siteTel","workpiece","reason","carryOutTiming","quoteDeadline","siteNotes"];
   const SEGS=["roadPermit","guardman"];
-  const MKEYS=["name","maker","model","year","cpu","serial","spec","acc","price"];
+  const MKEYS=["name","maker","model","year","cpu","serial","spec","acc","cond","price"];
   const MSEGS=["manual","want","op"];
   const DRAFT_KEY="sitami-draft-v1";
 
@@ -597,12 +602,12 @@
   <tr><td colspan="2">道路使用許可申請　${req(d.roadPermit)}　　　ガードマン　${req(d.guardman)}</td><th>見積期限</th><td class="v">${esc(fmtD(d.quoteDeadline))}</td><th>下見者</th><td class="v">${esc(d.inspector)}</td></tr>
 </table>`;
   }
-  const MT_HEAD=`<colgroup><col style="width:32px"><col style="width:110px"><col style="width:66px"><col style="width:76px"><col style="width:50px"><col style="width:62px"><col><col style="width:180px"><col style="width:64px"><col style="width:40px"><col style="width:68px"><col style="width:56px"><col style="width:82px"></colgroup>
-  <thead><tr><th>No.</th><th>機械名</th><th>メーカー</th><th>型式</th><th>年式</th><th>CPU</th><th>仕様</th><th>付属品</th><th>機械番号</th><th>取説<br>有/無</th><th>欲しい○<br>欲しくない×</th><th>動作確認<br>○△×</th><th>仕入価格</th></tr></thead>`;
+  const MT_HEAD=`<colgroup><col style="width:30px"><col style="width:100px"><col style="width:92px"><col style="width:74px"><col><col style="width:150px"><col style="width:160px"><col style="width:60px"><col style="width:38px"><col style="width:62px"><col style="width:58px"><col style="width:78px"></colgroup>
+  <thead><tr><th>No.</th><th>機械名</th><th>メーカー<br>型式</th><th>年式<br>CPU</th><th>仕様</th><th>付属品</th><th>機械状態</th><th>機械番号</th><th>取説<br>有/無</th><th>欲しい○<br>欲しくない×</th><th>動作確認<br>○△×</th><th>仕入価格</th></tr></thead>`;
   function machineRow(m,no){
     m=m||{};
-    return `<td class="c blk">${no||""}</td><td>${esc(m.name)}</td><td>${esc(m.maker)}</td><td>${esc(m.model)}</td><td class="c">${esc(m.year?fmtD(m.year):"")}</td><td>${esc(m.cpu)}</td>`+
-      `<td class="list">${lines(m.spec).map(li).join("")}</td><td class="list">${lines(m.acc).map(li).join("")}</td>`+
+    return `<td class="c blk">${no||""}</td><td>${esc(m.name)}</td><td><div class="two"><div>${esc(m.maker)}</div><div>${esc(m.model)}</div></div></td><td><div class="two"><div>${esc(m.year?fmtD(m.year):"")}</div><div>${esc(m.cpu)}</div></div></td>`+
+      `<td class="list">${lines(m.spec).map(li).join("")}</td><td class="list">${lines(m.acc).map(li).join("")}</td><td class="list">${lines(m.cond).map(li).join("")}</td>`+
       `<td>${esc(m.serial)}</td><td class="c">${esc(m.manual)}</td><td class="c">${esc(m.want)}</td><td class="c">${esc(m.op)}</td><td class="r">${yen(m.price)}</td>`;
   }
   function siteHtml(d){
