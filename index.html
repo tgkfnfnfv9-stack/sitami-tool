@@ -153,8 +153,17 @@
   .sheet .r{text-align:right;font-variant-numeric:tabular-nums}
   .sheet .v{font-size:12.5px;font-weight:600}
   .sheet .req .on{border:1.5px solid #000;border-radius:50%;padding:0 4px}
-  .sheet .notes{white-space:pre-wrap;line-height:1.75;font-size:12px;vertical-align:top;padding:6px 8px}
-  .sheet .gap{height:8px;border:none}
+  .sheet .mt td.blk{height:72px}
+  .sheet .mt td.list{vertical-align:top;font-size:10.5px;line-height:1.5;padding:5px 7px}
+  .sheet .list div{padding-left:.9em;text-indent:-.9em}
+  .sheet .list div::before{content:"・"}
+  .sheet .mt tr.mrow td{border-top:1.6px solid #000}
+  .sheet .site{margin-top:-1px}
+  .sheet .site th{text-align:left;font-size:10.5px}
+  .sheet .site td{height:96px;vertical-align:top;padding:6px 10px;font-size:11.5px;line-height:1.7}
+  .sheet .site .cols{column-count:2;column-gap:28px}
+  .sheet .site .cols div{break-inside:avoid;padding-left:.9em;text-indent:-.9em}
+  .sheet .site .cols div::before{content:"・"}
 </style>
 </head>
 <body>
@@ -362,7 +371,11 @@
         <div class="field full"><label>機械番号</label><input type="text" data-m="serial" placeholder="221031"></div>
       </div>
       <div class="sub-h">仕様・付属品</div>
-      <div class="field"><textarea data-m="spec" rows="5" placeholder="9吋スクロールチャック（キタガワ JN09T）&#10;工作主軸 100〜1000min-1&#10;内研軸 20000〜40000min-1（ベルト駆動式）&#10;貫通穴径 70φ、ストローク X300、Z350&#10;固定具、ロータリードレッサー有"></textarea></div>
+      <div style="display:flex;flex-direction:column;gap:10px">
+        <div class="field"><label>仕様</label><textarea data-m="spec" rows="5" placeholder="工作主軸 100〜1000min-1&#10;内研軸 20000〜40000min-1（ベルト駆動式）&#10;貫通穴径 70φ&#10;ストローク X300、Z350"></textarea></div>
+        <div class="field"><label>付属品</label><textarea data-m="acc" rows="5" placeholder="9吋スクロールチャック（キタガワ JN09T）&#10;固定具&#10;ロータリードレッサー"></textarea></div>
+      </div>
+      <div class="hint" style="margin-top:6px">1行に1項目ずつ入力すると帳票で見やすくなります</div>
       <div class="sub-h">確認</div>
       <div class="grid2">
         <div class="field">
@@ -455,16 +468,21 @@
   const val=k=>{const el=$(`[data-key="${k}"]`);return el?el.value:""};
   const fmtD=s=>{if(!s)return"";const[y,m,d]=s.split("-");return d?`${+m}/${+d}`:`${y}.${+m}`};
   const req=k=>{const v=segVal($(`[data-seg="${k}"]`));return `<span class="req">${["必要","不必要"].map(x=>`<span class="${v===x?"on":""}">${x}</span>`).join("・")}</span>`};
+  const lines=t=>String(t||"").split(/\n/).map(x=>x.replace(/^[・\-\s]+/,"").trim()).filter(Boolean);
+  const list=t=>lines(t).map(x=>`<div>${esc(x)}</div>`).join("");
   function buildSheet(){
     const ms=$$(".m-card",box).map(c=>{const g=k=>$(`[data-m="${k}"]`,c).value;const s=k=>segVal($(`[data-mseg="${k}"]`,c));
-      return{name:g("name"),maker:g("maker"),model:g("model"),year:g("year"),cpu:g("cpu"),serial:g("serial"),spec:g("spec"),manual:s("manual"),want:s("want"),op:s("op"),price:g("price")}});
-    const rows=Math.max(14,ms.length);
+      return{name:g("name"),maker:g("maker"),model:g("model"),year:g("year"),cpu:g("cpu"),serial:g("serial"),spec:g("spec"),acc:g("acc"),manual:s("manual"),want:s("want"),op:s("op"),price:g("price")}});
+    const blocks=Math.max(4,ms.length);
     let body="";
-    for(let i=0;i<rows;i++){const m=ms[i]||{};
-      body+=`<tr><td class="c">${m.name!==undefined?i+1:""}</td><td>${esc(m.name)}</td><td>${esc(m.maker)}</td><td>${esc(m.model)}</td><td class="c">${esc(m.year?fmtD(m.year):"")}</td><td>${esc(m.cpu)}</td>`+
-        (i===0?`<td class="notes" rowspan="${rows}">${esc(ms.map((x,j)=>(ms.length>1&&x.spec?`【${j+1}】`:"")+x.spec).filter(Boolean).join("\n"))}${val("siteNotes")?"\n\n"+esc(val("siteNotes")):""}</td>`:"")+
+    for(let i=0;i<blocks;i++){const m=ms[i]||{};const has=i<ms.length;
+      body+=`<tr class="mrow"><td class="c blk">${has?i+1:""}</td><td>${esc(m.name)}</td><td>${esc(m.maker)}</td><td>${esc(m.model)}</td><td class="c">${esc(m.year?fmtD(m.year):"")}</td><td>${esc(m.cpu)}</td>`+
+        `<td class="list">${list(m.spec)}</td><td class="list">${list(m.acc)}</td>`+
         `<td>${esc(m.serial)}</td><td class="c">${esc(m.manual)}</td><td class="c">${esc(m.want)}</td><td class="c">${esc(m.op)}</td><td class="r">${m.price?"¥"+esc(Number(String(m.price).replace(/\D/g,"")).toLocaleString()):""}</td></tr>`;
     }
+    const notes=val("siteNotes");
+    const chips=$$("#siteChips .chip.on").map(x=>x.textContent).filter(c=>!notes.includes(c));
+    const site=[...lines(notes),...chips];
     $("#sheet").innerHTML=`
 <table>
   <colgroup><col style="width:120px"><col><col style="width:90px"><col><col style="width:70px"><col style="width:140px"></colgroup>
@@ -474,10 +492,11 @@
   <tr><td colspan="2">道路使用許可申請　${req("roadPermit")}　　　ガードマン　${req("guardman")}</td><th>見積期限</th><td class="v">${esc(fmtD(val("quoteDeadline")))}</td><th>下見者</th><td class="v">${esc(val("inspector"))}</td></tr>
 </table>
 <table class="mt" style="margin-top:-1px">
-  <colgroup><col style="width:28px"><col style="width:130px"><col style="width:70px"><col style="width:80px"><col style="width:52px"><col style="width:64px"><col><col style="width:70px"><col style="width:34px"><col style="width:62px"><col style="width:56px"><col style="width:66px"></colgroup>
-  <tr><th>No.</th><th>機械名</th><th>メーカー</th><th>型式</th><th>年式</th><th>CPU</th><th>仕様／付属品／現場状況</th><th>機械番号</th><th>取説<br>有/無</th><th>欲しい○<br>欲しくない×</th><th>動作確認<br>○△×</th><th>仕入価格</th></tr>
+  <colgroup><col style="width:28px"><col style="width:110px"><col style="width:66px"><col style="width:76px"><col style="width:50px"><col style="width:62px"><col><col style="width:190px"><col style="width:64px"><col style="width:34px"><col style="width:68px"><col style="width:56px"><col style="width:66px"></colgroup>
+  <tr><th>No.</th><th>機械名</th><th>メーカー</th><th>型式</th><th>年式</th><th>CPU</th><th>仕様</th><th>付属品</th><th>機械番号</th><th>取説<br>有/無</th><th>欲しい○<br>欲しくない×</th><th>動作確認<br>○△×</th><th>仕入価格</th></tr>
   ${body}
-</table>`;
+</table>
+<table class="site"><tr><th>現場状況・搬出条件</th></tr><tr><td><div class="cols">${site.map(x=>`<div>${esc(x)}</div>`).join("")}</div></td></tr></table>`;
   }
   $("#btnPreview").addEventListener("click",()=>{buildSheet();open("preview")});
   $("#pvClose").addEventListener("click",()=>$("#preview").classList.remove("on"));
