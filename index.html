@@ -1,0 +1,487 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<meta name="theme-color" content="#ea6a1b">
+<title>下見シート｜株式会社小林機械</title>
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="下見シート">
+<style>
+  :root{
+    --sumi:#1c1b19; --sumi-soft:#57534c;
+    --kinari:#f4f3ef; --washi:#ffffff;
+    --ai:#ea6a1b; --ai-soft:#cf5b12;
+    --shu:#242320; --shu-deep:#141311;
+    --keisen:#e5e2d9; --keisen-strong:#bcb6a8;
+    --ok:#2f6f4f; --ng:#b3261e; --warn:#b7791f;
+    --shadow:0 1px 2px rgba(28,27,25,.06),0 6px 18px rgba(28,27,25,.07);
+    --barClear:env(safe-area-inset-bottom,0px);
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{margin:0;padding:0}
+  body{font-family:'Hiragino Sans','Hiragino Kaku Gothic ProN','Noto Sans JP','Yu Gothic',Meiryo,system-ui,sans-serif;color:var(--sumi);background:var(--kinari);line-height:1.5;-webkit-font-smoothing:antialiased;padding-bottom:calc(96px + var(--barClear))}
+  .wrap{max-width:680px;margin:0 auto;padding:0 14px}
+
+  header{background:#fff;border-bottom:3px solid var(--ai);padding:18px 0 16px}
+  .head-inner{display:flex;align-items:center;gap:14px}
+  .seal{flex:0 0 auto;width:58px;height:58px;border-radius:8px;border:2.5px solid var(--ai);color:var(--ai);display:flex;align-items:center;justify-content:center;font-weight:800;font-size:15px;letter-spacing:.1em;transform:rotate(-4deg);box-shadow:inset 0 0 0 2px rgba(234,106,27,.14);background:rgba(234,106,27,.04);writing-mode:vertical-rl}
+  .brand{font-size:11.5px;font-weight:800;color:var(--ai);letter-spacing:.08em;margin:0 0 1px}
+  .head-text{min-width:0}
+  .head-text h1{margin:0;font-size:21px;font-weight:800;letter-spacing:.04em}
+  .head-text p{margin:3px 0 0;font-size:12.5px;color:var(--sumi-soft)}
+  .reset-all{margin-left:auto;flex:0 0 auto;align-self:flex-start;display:flex;align-items:center;gap:5px;background:#fff;color:var(--ai);border:1.5px solid var(--ai);border-radius:9px;font-family:inherit;font-size:12px;font-weight:700;padding:8px 11px;line-height:1;white-space:nowrap}
+  .reset-all svg{width:15px;height:15px;stroke:currentColor;fill:none;stroke-width:2}
+
+  section{margin-top:18px}
+  .sec-label{display:flex;align-items:center;gap:8px;font-size:12px;font-weight:700;color:var(--ai);letter-spacing:.08em;margin:0 2px 8px}
+  .sec-label::before{content:"";width:14px;height:2px;background:var(--sumi);border-radius:2px}
+  .sec-label .cnt{margin-left:auto;color:var(--sumi-soft);font-weight:600;letter-spacing:0}
+
+  .card{background:var(--washi);border:1px solid var(--keisen);border-radius:12px;box-shadow:var(--shadow)}
+  .card.pad{padding:14px}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  .grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}
+  .field{display:flex;flex-direction:column;gap:5px;min-width:0}
+  .field.full{grid-column:1/-1}
+  label,.lbl{font-size:11.5px;font-weight:600;color:var(--sumi-soft)}
+  .hint{font-size:10.5px;color:var(--keisen-strong);font-weight:500}
+  input,select,textarea{font-family:inherit;font-size:15px;color:var(--sumi);background:#fcfbf7;border:1px solid var(--keisen);border-radius:8px;padding:10px 11px;width:100%;min-width:0}
+  textarea{resize:vertical;line-height:1.6;min-height:84px}
+  select{appearance:none;-webkit-appearance:none;background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'><path d='M2 4l4 4 4-4' stroke='%235b574d' fill='none' stroke-width='1.6'/></svg>");background-repeat:no-repeat;background-position:right 10px center;padding-right:28px}
+  input:focus,select:focus,textarea:focus{outline:2px solid var(--ai-soft);outline-offset:0;border-color:var(--ai-soft);background:#fff}
+  input[inputmode="numeric"]{font-variant-numeric:tabular-nums;text-align:right}
+  .yen{position:relative}
+  .yen input{padding-left:24px}
+  .yen::before{content:"¥";position:absolute;left:10px;top:50%;transform:translateY(-50%);color:var(--sumi-soft);font-size:14px;pointer-events:none}
+  .sub-h{font-size:11px;font-weight:700;color:var(--ai);letter-spacing:.06em;margin:14px 0 8px;padding-top:12px;border-top:1px dashed var(--keisen)}
+  .sub-h:first-child{margin-top:0;padding-top:0;border-top:none}
+
+  /* セグメント */
+  .seg{display:flex;width:100%;border:1px solid var(--keisen-strong);border-radius:8px;overflow:hidden;background:#fff}
+  .seg-btn{flex:1;font-family:inherit;font-size:13px;font-weight:700;padding:10px 6px;border:none;background:#fff;color:var(--sumi-soft);line-height:1;white-space:nowrap}
+  .seg-btn+.seg-btn{border-left:1px solid var(--keisen)}
+  .seg-btn.on{background:var(--ai);color:#fff}
+  .seg-btn.on.ok{background:var(--ok)}
+  .seg-btn.on.warn{background:var(--warn)}
+  .seg-btn.on.ng{background:var(--ng)}
+
+  .kon-card{display:flex;align-items:center;gap:10px;background:var(--ai);color:#fff;border-radius:12px;padding:12px 14px;margin-bottom:12px}
+  .kon-card .k{font-size:12px;font-weight:700;letter-spacing:.06em;opacity:.92;white-space:nowrap}
+  .kon-card input{background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.4);color:#fff;font-size:20px;font-weight:800;letter-spacing:.06em;padding:6px 10px;text-align:left}
+  .kon-card input::placeholder{color:rgba(255,255,255,.6)}
+  .kon-card input:focus{outline:2px solid #fff;background:rgba(255,255,255,.22)}
+
+  /* 機械カード */
+  .m-card{margin-bottom:12px;overflow:hidden}
+  .m-head{display:flex;align-items:center;gap:10px;padding:11px 14px;background:#faf8f2;border-bottom:1px solid var(--keisen);cursor:pointer;user-select:none}
+  .m-no{flex:0 0 auto;width:26px;height:26px;border-radius:7px;background:var(--ai);color:#fff;font-size:12.5px;font-weight:700;display:flex;align-items:center;justify-content:center}
+  .m-title{flex:1;min-width:0;font-size:13px;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .m-title .sub{font-weight:500;color:var(--sumi-soft);font-size:12px;margin-left:6px}
+  .m-badges{display:flex;gap:4px;flex:0 0 auto}
+  .badge{font-size:11px;font-weight:800;width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;border:1.5px solid var(--keisen-strong);color:var(--keisen-strong)}
+  .badge.ok{border-color:var(--ok);color:var(--ok)}
+  .badge.warn{border-color:var(--warn);color:var(--warn)}
+  .badge.ng{border-color:var(--ng);color:var(--ng)}
+  .chev{flex:0 0 auto;color:var(--keisen-strong);transition:transform .2s;font-size:13px}
+  .m-card.collapsed .chev{transform:rotate(-90deg)}
+  .m-body{padding:14px}
+  .m-card.collapsed .m-body{display:none}
+  .del-row{margin-top:12px;width:100%;background:none;border:1px solid var(--keisen);color:var(--shu-deep);font-size:12.5px;font-weight:600;padding:9px;border-radius:8px;font-family:inherit}
+  .add-row{width:100%;border:1.5px dashed var(--keisen-strong);background:#fcfbf7;color:var(--ai);font-weight:700;font-size:14px;padding:13px;border-radius:12px;font-family:inherit}
+
+  /* 現場状況チップ */
+  .chips{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px}
+  .chip{font-family:inherit;font-size:12px;font-weight:700;padding:6px 11px;border-radius:20px;border:1px solid var(--keisen-strong);background:#fff;color:var(--sumi-soft)}
+  .chip.on{background:#fff3ea;border-color:var(--ai);color:var(--ai)}
+  .chip.on::before{content:"✓ "}
+
+  /* 写真 */
+  .att-btns{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-bottom:12px}
+  .att-btn{display:flex;flex-direction:column;align-items:center;gap:5px;background:var(--washi);border:1px solid var(--keisen);border-radius:10px;padding:13px 6px;font-family:inherit;font-size:11.5px;font-weight:700;color:var(--ai);box-shadow:var(--shadow)}
+  .att-btn svg{width:22px;height:22px;stroke:var(--shu);fill:none;stroke-width:1.8}
+  .att-empty{font-size:12px;color:var(--keisen-strong);text-align:center;padding:14px 0}
+
+  .util-row{display:flex;justify-content:space-between;align-items:center;margin-top:18px;padding:0 2px}
+  .util-row .saved{font-size:11px;color:var(--ok)}
+  .clear-btn{background:none;border:none;color:var(--keisen-strong);font-size:12px;font-family:inherit;text-decoration:underline}
+
+  /* 下部バー */
+  .actionbar{position:fixed;left:0;right:0;bottom:0;z-index:50;background:rgba(246,242,233,.94);backdrop-filter:blur(8px);border-top:1px solid var(--keisen);padding:10px 14px calc(10px + var(--barClear));display:flex;gap:8px;max-width:680px;margin:0 auto}
+  .btn{flex:1;font-family:inherit;font-weight:700;font-size:13px;padding:11px 4px;border-radius:11px;border:none;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px}
+  .btn svg{width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:2}
+  .btn-preview{background:var(--ai);color:#fff}
+  .btn-sub{background:var(--washi);color:var(--ai);border:1.5px solid var(--keisen-strong)}
+  .btn-share{background:var(--shu);color:#fff;box-shadow:0 4px 14px rgba(20,19,17,.28)}
+  .btn:active{transform:translateY(1px)}
+
+  .toast{position:fixed;left:50%;bottom:calc(86px + var(--barClear));transform:translateX(-50%) translateY(20px);background:var(--sumi);color:#fff;font-size:13px;padding:11px 18px;border-radius:10px;opacity:0;transition:.25s;z-index:300;pointer-events:none;max-width:90%;text-align:center}
+  .toast.on{opacity:1;transform:translateX(-50%) translateY(0)}
+
+  /* ダイアログ */
+  .output-menu{position:fixed;inset:0;z-index:260;background:rgba(20,19,17,.48);display:none;align-items:flex-end;justify-content:center;padding:18px 14px calc(18px + var(--barClear))}
+  .output-menu.on{display:flex}
+  .output-panel{width:min(100%,520px);background:var(--washi);border:1px solid var(--keisen);border-radius:16px;box-shadow:0 18px 50px rgba(20,19,17,.28);padding:16px}
+  .output-title{font-size:15px;font-weight:800;text-align:center;margin:0 0 4px}
+  .output-note{font-size:11px;color:var(--sumi-soft);text-align:center;margin:0 0 13px;line-height:1.45}
+  .output-choice{width:100%;font-family:inherit;border:1px solid var(--keisen);border-radius:11px;background:#fff;color:var(--sumi);font-size:14px;font-weight:700;padding:13px 14px;margin-top:8px}
+  .output-choice.primary{background:var(--shu);color:#fff;border-color:var(--shu)}
+  .output-cancel{width:100%;font-family:inherit;border:none;background:none;color:var(--sumi-soft);font-size:13px;font-weight:700;padding:12px 8px 4px;margin-top:4px}
+  .ai-text{min-height:150px;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:12px}
+  @media (min-width:700px){.output-menu{align-items:center}}
+
+  /* プレビュー */
+  .pv{position:fixed;inset:0;z-index:150;background:var(--kinari);display:none;flex-direction:column}
+  .pv.on{display:flex}
+  .pv-bar{flex:0 0 auto;display:flex;align-items:center;justify-content:space-between;padding:13px 16px;background:var(--ai);color:#fff}
+  .pv-title{font-size:15px;font-weight:800;letter-spacing:.04em}
+  .pv-close{background:rgba(255,255,255,.16);border:none;color:#fff;font-family:inherit;font-size:13px;font-weight:700;padding:7px 14px;border-radius:8px}
+  .pv-body{flex:1;overflow:auto;padding:16px 14px 26px;-webkit-overflow-scrolling:touch}
+  .pv-hint{font-size:10.5px;color:var(--sumi-soft);margin:0 2px 10px}
+  .pv-sheetwrap{overflow:auto;border:1px solid var(--keisen);border-radius:8px;background:#fff}
+  .pv-foot{flex:0 0 auto;display:flex;gap:8px;padding:10px 14px calc(10px + var(--barClear));border-top:1px solid var(--keisen);background:var(--washi)}
+
+  /* 帳票（A4横）*/
+  .sheet{width:1123px;padding:28px 30px;background:#fff;color:#000;font-size:11px}
+  .sheet table{width:100%;border-collapse:collapse;table-layout:fixed}
+  .sheet th,.sheet td{border:1px solid #333;padding:4px 6px;vertical-align:middle;word-break:break-all}
+  .sheet th{background:#f0ede5;font-weight:700;font-size:10px;text-align:left;white-space:nowrap}
+  .sheet .mt th{text-align:center}
+  .sheet .mt td{height:24px;font-size:11px}
+  .sheet .c{text-align:center}
+  .sheet .r{text-align:right;font-variant-numeric:tabular-nums}
+  .sheet .v{font-size:12.5px;font-weight:600}
+  .sheet .req .on{border:1.5px solid #000;border-radius:50%;padding:0 4px}
+  .sheet .notes{white-space:pre-wrap;line-height:1.75;font-size:12px;vertical-align:top;padding:6px 8px}
+  .sheet .gap{height:8px;border:none}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="wrap head-inner">
+    <div class="seal">下見</div>
+    <div class="head-text">
+      <div class="brand">株式会社小林機械</div>
+      <h1>下見シート</h1>
+      <p>現場で入力 → 写真を添付 → PDFを出力・共有</p>
+    </div>
+    <button class="reset-all" id="resetTop" type="button">
+      <svg viewBox="0 0 24 24"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/></svg>
+      リセット
+    </button>
+  </div>
+</header>
+
+<div class="wrap">
+
+  <!-- 管理情報 -->
+  <section>
+    <div class="sec-label">管理情報</div>
+    <div class="card pad">
+      <div class="kon-card">
+        <span class="k">高コン</span>
+        <input type="text" inputmode="numeric" data-key="konNo" placeholder="242620">
+      </div>
+      <div class="grid3">
+        <div class="field"><label>下見日</label><input type="date" data-key="inspectDate"></div>
+        <div class="field"><label>担当</label><input type="text" data-key="tanto" placeholder="長谷川"></div>
+        <div class="field"><label>下見者</label><input type="text" data-key="inspector" placeholder="平近"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 依頼・現場 -->
+  <section>
+    <div class="sec-label">依頼会社・現場</div>
+    <div class="card pad">
+      <div class="sub-h">依頼会社</div>
+      <div class="grid2">
+        <div class="field"><label>会社名</label><input type="text" data-key="clientCompany" placeholder="三立興産"></div>
+        <div class="field"><label>担当者名</label><input type="text" data-key="clientPerson" placeholder="堀澤様"></div>
+      </div>
+      <div class="sub-h">現場</div>
+      <div class="grid2">
+        <div class="field"><label>現場名</label><input type="text" data-key="siteName" placeholder="スギノマシン"></div>
+        <div class="field"><label>担当者名</label><input type="text" data-key="sitePerson" placeholder="金盛様"></div>
+        <div class="field full"><label>住所</label><input type="text" data-key="siteAddress" placeholder="富山県滑川市東山2880"></div>
+        <div class="field full"><label>TEL</label><input type="tel" data-key="siteTel" placeholder="076-477-2561"></div>
+      </div>
+      <div class="sub-h">申請・手配</div>
+      <div class="grid2">
+        <div class="field">
+          <span class="lbl">道路使用許可申請</span>
+          <div class="seg" data-seg="roadPermit"><button class="seg-btn" data-v="必要">必要</button><button class="seg-btn" data-v="不必要">不必要</button></div>
+        </div>
+        <div class="field">
+          <span class="lbl">ガードマン</span>
+          <div class="seg" data-seg="guardman"><button class="seg-btn" data-v="必要">必要</button><button class="seg-btn" data-v="不必要">不必要</button></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 案件概要 -->
+  <section>
+    <div class="sec-label">案件概要</div>
+    <div class="card pad">
+      <div class="grid2">
+        <div class="field"><label>加工物</label><input type="text" data-key="workpiece" placeholder="鉄"></div>
+        <div class="field"><label>見積期限</label><input type="date" data-key="quoteDeadline"></div>
+        <div class="field full"><label>出す理由</label><input type="text" data-key="reason" placeholder="使用頻度少ない為"></div>
+        <div class="field full"><label>搬出時期</label><input type="text" data-key="carryOutTiming" placeholder="12月中旬〜2027年1月頃（現在未使用の為ゴミ）"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 機械 -->
+  <section>
+    <div class="sec-label">機械<span class="cnt" id="mCount">1台</span></div>
+    <div id="machines"></div>
+    <button class="add-row" id="addMachine" type="button">＋ 機械を追加</button>
+  </section>
+
+  <!-- 現場状況 -->
+  <section>
+    <div class="sec-label">現場状況・搬出条件</div>
+    <div class="card pad">
+      <div class="hint" style="margin-bottom:8px">タップでチェック（メモにも反映予定）</div>
+      <div class="chips" id="siteChips">
+        <button class="chip" type="button">ピットあり</button>
+        <button class="chip" type="button">周辺の物を移動してもらえる</button>
+        <button class="chip" type="button">フォーク借用可</button>
+        <button class="chip" type="button">クレーン借用可</button>
+        <button class="chip" type="button">トラック門内進入OK</button>
+        <button class="chip" type="button">外に停車可</button>
+        <button class="chip" type="button">進入口注意</button>
+        <button class="chip" type="button">別置機器あり</button>
+      </div>
+      <div class="field">
+        <label>メモ（帳票の「仕様・現場状況」欄に印字）</label>
+        <textarea data-key="siteNotes" rows="7" placeholder="※機械左後ろ側にピットありの為、避けて搬出する必要あり（今はフタしてある）&#10;機械周辺の机やラックはどかしてもらえる&#10;3.5t、7tフォーク、5t、2.8tクレーン借用可&#10;トラック門の中へ進入OK&#10;敷地内への進入口注意（南東側（畑側）から入る＝東門）"></textarea>
+      </div>
+    </div>
+  </section>
+
+  <!-- 写真 -->
+  <section>
+    <div class="sec-label">写真・添付</div>
+    <div class="card pad">
+      <div class="att-btns">
+        <button class="att-btn" type="button" data-todo="カメラ撮影">
+          <svg viewBox="0 0 24 24"><rect x="3" y="7" width="18" height="13" rx="2"/><path d="M9 7l1.5-2h3L15 7"/><circle cx="12" cy="13.5" r="3.2"/></svg>
+          カメラ撮影
+        </button>
+        <button class="att-btn" type="button" data-todo="画像の選択">
+          <svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="8.5" cy="9.5" r="1.6"/><path d="M21 16l-5-5L5 20"/></svg>
+          画像を選択
+        </button>
+      </div>
+      <div class="att-empty">まだ写真はありません（銘板・全景・搬出経路など）</div>
+    </div>
+  </section>
+
+  <div class="util-row">
+    <span class="saved" id="savedNote">UI試作版（保存・PDF出力は今後追加）</span>
+    <button class="clear-btn" type="button" data-todo="下書きの消去">下書きを消去</button>
+  </div>
+</div>
+
+<div class="actionbar">
+  <button class="btn btn-preview" id="btnPreview" type="button">
+    <svg viewBox="0 0 24 24"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/></svg>
+    確認
+  </button>
+  <button class="btn btn-sub" type="button" data-todo="データ保存">
+    <svg viewBox="0 0 24 24"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><path d="M17 21v-8H7v8M7 3v5h8"/></svg>
+    保存
+  </button>
+  <button class="btn btn-sub" type="button" data-todo="データ読込">
+    <svg viewBox="0 0 24 24"><path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/><path d="M14 3v6h6M12 18v-6M9 15l3-3 3 3"/></svg>
+    読込
+  </button>
+  <button class="btn btn-sub" id="btnAi" type="button">
+    <svg viewBox="0 0 24 24"><path d="M12 3l1.9 4.9L19 9.8l-5.1 1.9L12 16.6l-1.9-4.9L5 9.8l5.1-1.9z"/><path d="M18.8 15.2l.8 2 2 .8-2 .8-.8 2-.8-2-2-.8 2-.8z"/></svg>
+    AI取込
+  </button>
+  <button class="btn btn-share" id="btnShare" type="button">
+    <svg viewBox="0 0 24 24"><path d="M12 3v12M8 7l4-4 4 4"/><path d="M5 13v6h14v-6"/></svg>
+    出力
+  </button>
+</div>
+
+<div class="output-menu" id="outputMenu" role="dialog" aria-modal="true">
+  <div class="output-panel">
+    <div class="output-title">出力</div>
+    <p class="output-note">下見シートをA4横のPDFで出力します（準備中）</p>
+    <button class="output-choice primary" type="button" data-todo="共有">共有</button>
+    <button class="output-choice" type="button" data-todo="PDF保存">PDF保存</button>
+    <button class="output-cancel" type="button" data-close>キャンセル</button>
+  </div>
+</div>
+
+<div class="output-menu" id="aiMenu" role="dialog" aria-modal="true">
+  <div class="output-panel">
+    <div class="output-title">AI取込</div>
+    <p class="output-note">AIが作成した下見シートJSONを貼り付けてください<br>形式は AI_SCHEMA.md（草案）を参照</p>
+    <textarea class="ai-text" placeholder='{"konNo":"242620","siteName":"スギノマシン","machines":[ ... ]}'></textarea>
+    <button class="output-choice primary" type="button" data-todo="AI取込">取り込む</button>
+    <button class="output-cancel" type="button" data-close>キャンセル</button>
+  </div>
+</div>
+
+<div class="pv" id="preview">
+  <div class="pv-bar"><span class="pv-title">プレビュー（確認）</span><button class="pv-close" id="pvClose" type="button">閉じる</button></div>
+  <div class="pv-body">
+    <p class="pv-hint">A4横の帳票イメージ（横にスクロールできます）</p>
+    <div class="pv-sheetwrap"><div class="sheet" id="sheet"></div></div>
+  </div>
+  <div class="pv-foot">
+    <button class="btn btn-sub" type="button" data-todo="データ保存">保存（データ）</button>
+    <button class="btn btn-share" type="button" data-open="outputMenu">出力（PDF）</button>
+  </div>
+</div>
+
+<template id="tplMachine">
+  <div class="card m-card">
+    <div class="m-head">
+      <span class="m-no">1</span>
+      <span class="m-title"></span>
+      <span class="m-badges"><span class="badge" data-badge="want">−</span><span class="badge" data-badge="op">−</span></span>
+      <span class="chev">▼</span>
+    </div>
+    <div class="m-body">
+      <div class="sub-h">機械</div>
+      <div class="grid2">
+        <div class="field full"><label>機械名</label><input type="text" data-m="name" placeholder="NC内面研削盤"></div>
+        <div class="field"><label>メーカー</label><input type="text" data-m="maker" placeholder="オークマ"></div>
+        <div class="field"><label>型式</label><input type="text" data-m="model" placeholder="GI-10NⅡ"></div>
+        <div class="field"><label>年式</label><input type="month" data-m="year"></div>
+        <div class="field"><label>CPU</label><input type="text" data-m="cpu" placeholder="OSP-P300GA"></div>
+        <div class="field full"><label>機械番号</label><input type="text" data-m="serial" placeholder="221031"></div>
+      </div>
+      <div class="sub-h">仕様・付属品</div>
+      <div class="field"><textarea data-m="spec" rows="5" placeholder="9吋スクロールチャック（キタガワ JN09T）&#10;工作主軸 100〜1000min-1&#10;内研軸 20000〜40000min-1（ベルト駆動式）&#10;貫通穴径 70φ、ストローク X300、Z350&#10;固定具、ロータリードレッサー有"></textarea></div>
+      <div class="sub-h">確認</div>
+      <div class="grid2">
+        <div class="field">
+          <span class="lbl">取説</span>
+          <div class="seg" data-mseg="manual"><button class="seg-btn" data-v="有">有</button><button class="seg-btn" data-v="無">無</button></div>
+        </div>
+        <div class="field">
+          <span class="lbl">欲しい／欲しくない</span>
+          <div class="seg" data-mseg="want"><button class="seg-btn ok" data-v="○">○</button><button class="seg-btn ng" data-v="×">×</button></div>
+        </div>
+        <div class="field">
+          <span class="lbl">動作確認</span>
+          <div class="seg" data-mseg="op"><button class="seg-btn ok" data-v="○">○</button><button class="seg-btn warn" data-v="△">△</button><button class="seg-btn ng" data-v="×">×</button></div>
+        </div>
+        <div class="field">
+          <label>仕入価格</label>
+          <div class="yen"><input type="text" inputmode="numeric" data-m="price" placeholder="0"></div>
+        </div>
+      </div>
+      <button class="del-row" type="button">この機械を削除</button>
+    </div>
+  </div>
+</template>
+
+<div class="toast" id="toast"></div>
+
+<script>
+/* UI試作：画面の動き（機械の追加・削除・折りたたみ、選択ボタン、プレビュー表示）のみ。
+   保存・読込・PDF出力・AI取込・写真は今後実装。 */
+(function(){
+  const $=(s,r=document)=>r.querySelector(s), $$=(s,r=document)=>[...r.querySelectorAll(s)];
+  let tt; const toast=m=>{const t=$("#toast");t.textContent=m;t.classList.add("on");clearTimeout(tt);tt=setTimeout(()=>t.classList.remove("on"),1800)};
+  const esc=s=>String(s??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+
+  // セグメント（同じボタンをもう一度押すと解除）
+  document.addEventListener("click",e=>{
+    const b=e.target.closest(".seg-btn"); if(!b) return;
+    const on=b.classList.contains("on");
+    $$(".seg-btn",b.parentElement).forEach(x=>x.classList.remove("on"));
+    if(!on) b.classList.add("on");
+    const card=b.closest(".m-card"); if(card) refreshHead(card);
+  });
+  const segVal=el=>{const o=el&&$(".seg-btn.on",el);return o?o.dataset.v:""};
+
+  // 機械カード
+  const box=$("#machines");
+  function renumber(){
+    const cards=$$(".m-card",box);
+    cards.forEach((c,i)=>$(".m-no",c).textContent=i+1);
+    $("#mCount").textContent=cards.length+"台";
+  }
+  function refreshHead(c){
+    const n=$('[data-m="name"]',c).value, mk=$('[data-m="maker"]',c).value, md=$('[data-m="model"]',c).value;
+    $(".m-title",c).innerHTML=n?esc(n)+'<span class="sub">'+esc([mk,md].filter(Boolean).join(" "))+'</span>':'<span class="sub" style="margin:0">未入力</span>';
+    const cls={"○":"ok","△":"warn","×":"ng"};
+    ["want","op"].forEach(k=>{const v=segVal($(`[data-mseg="${k}"]`,c)),bd=$(`[data-badge="${k}"]`,c);bd.textContent=v||"−";bd.className="badge "+(cls[v]||"");bd.title=k==="want"?"欲しい":"動作確認"});
+  }
+  function addMachine(){
+    const c=$("#tplMachine").content.firstElementChild.cloneNode(true);
+    $$(".m-card",box).forEach(x=>x.classList.add("collapsed"));
+    box.appendChild(c);
+    $(".m-head",c).addEventListener("click",()=>c.classList.toggle("collapsed"));
+    $(".del-row",c).addEventListener("click",()=>{
+      if($$(".m-card",box).length<=1){toast("機械は1台以上必要です");return}
+      if(confirm("この機械を削除しますか？")){c.remove();renumber()}
+    });
+    c.addEventListener("input",()=>refreshHead(c));
+    refreshHead(c); renumber();
+  }
+  $("#addMachine").addEventListener("click",addMachine);
+  addMachine();
+
+  // チップ
+  $$("#siteChips .chip").forEach(ch=>ch.addEventListener("click",()=>ch.classList.toggle("on")));
+
+  // ダイアログ
+  const open=id=>$("#"+id).classList.add("on");
+  document.addEventListener("click",e=>{
+    const o=e.target.closest("[data-open]"); if(o) open(o.dataset.open);
+    const c=e.target.closest("[data-close]"); if(c) c.closest(".output-menu").classList.remove("on");
+    if(e.target.classList.contains("output-menu")) e.target.classList.remove("on");
+    const t=e.target.closest("[data-todo]"); if(t) toast(t.dataset.todo+"は準備中です");
+  });
+  $("#btnShare").addEventListener("click",()=>open("outputMenu"));
+  $("#btnAi").addEventListener("click",()=>open("aiMenu"));
+  $("#resetTop").addEventListener("click",()=>{if(confirm("入力をすべてリセットしますか？")) location.reload()});
+  if(new URLSearchParams(location.search).get("ai")==="1") open("aiMenu");
+
+  // プレビュー（入力内容を帳票イメージに流し込む）
+  const val=k=>{const el=$(`[data-key="${k}"]`);return el?el.value:""};
+  const fmtD=s=>{if(!s)return"";const[y,m,d]=s.split("-");return d?`${+m}/${+d}`:`${y}.${+m}`};
+  const req=k=>{const v=segVal($(`[data-seg="${k}"]`));return `<span class="req">${["必要","不必要"].map(x=>`<span class="${v===x?"on":""}">${x}</span>`).join("・")}</span>`};
+  function buildSheet(){
+    const ms=$$(".m-card",box).map(c=>{const g=k=>$(`[data-m="${k}"]`,c).value;const s=k=>segVal($(`[data-mseg="${k}"]`,c));
+      return{name:g("name"),maker:g("maker"),model:g("model"),year:g("year"),cpu:g("cpu"),serial:g("serial"),spec:g("spec"),manual:s("manual"),want:s("want"),op:s("op"),price:g("price")}});
+    const rows=Math.max(14,ms.length);
+    let body="";
+    for(let i=0;i<rows;i++){const m=ms[i]||{};
+      body+=`<tr><td class="c">${m.name!==undefined?i+1:""}</td><td>${esc(m.name)}</td><td>${esc(m.maker)}</td><td>${esc(m.model)}</td><td class="c">${esc(m.year?fmtD(m.year):"")}</td><td>${esc(m.cpu)}</td>`+
+        (i===0?`<td class="notes" rowspan="${rows}">${esc(ms.map((x,j)=>(ms.length>1&&x.spec?`【${j+1}】`:"")+x.spec).filter(Boolean).join("\n"))}${val("siteNotes")?"\n\n"+esc(val("siteNotes")):""}</td>`:"")+
+        `<td>${esc(m.serial)}</td><td class="c">${esc(m.manual)}</td><td class="c">${esc(m.want)}</td><td class="c">${esc(m.op)}</td><td class="r">${m.price?"¥"+esc(Number(String(m.price).replace(/\D/g,"")).toLocaleString()):""}</td></tr>`;
+    }
+    $("#sheet").innerHTML=`
+<table>
+  <colgroup><col style="width:120px"><col><col style="width:90px"><col><col style="width:70px"><col style="width:140px"></colgroup>
+  <tr><th>依頼会社／担当者名</th><td class="v">${esc(val("clientCompany"))}　／　${esc(val("clientPerson"))}</td><th>加工物</th><td class="v">${esc(val("workpiece"))}</td><th>高コン</th><td class="v">${esc(val("konNo"))}</td></tr>
+  <tr><th>現場名／担当者名</th><td class="v">${esc(val("siteName"))}　／　${esc(val("sitePerson"))}</td><th>出す理由</th><td class="v">${esc(val("reason"))}</td><th>下見日</th><td class="v">${esc(fmtD(val("inspectDate")))}</td></tr>
+  <tr><th>住所／TEL</th><td class="v">${esc(val("siteAddress"))}　／　${esc(val("siteTel"))}</td><th>搬出時期</th><td class="v">${esc(val("carryOutTiming"))}</td><th>担当</th><td class="v">${esc(val("tanto"))}</td></tr>
+  <tr><td colspan="2">道路使用許可申請　${req("roadPermit")}　　　ガードマン　${req("guardman")}</td><th>見積期限</th><td class="v">${esc(fmtD(val("quoteDeadline")))}</td><th>下見者</th><td class="v">${esc(val("inspector"))}</td></tr>
+</table>
+<table class="mt" style="margin-top:-1px">
+  <colgroup><col style="width:28px"><col style="width:130px"><col style="width:70px"><col style="width:80px"><col style="width:52px"><col style="width:64px"><col><col style="width:70px"><col style="width:34px"><col style="width:62px"><col style="width:56px"><col style="width:66px"></colgroup>
+  <tr><th>No.</th><th>機械名</th><th>メーカー</th><th>型式</th><th>年式</th><th>CPU</th><th>仕様／付属品／現場状況</th><th>機械番号</th><th>取説<br>有/無</th><th>欲しい○<br>欲しくない×</th><th>動作確認<br>○△×</th><th>仕入価格</th></tr>
+  ${body}
+</table>`;
+  }
+  $("#btnPreview").addEventListener("click",()=>{buildSheet();open("preview")});
+  $("#pvClose").addEventListener("click",()=>$("#preview").classList.remove("on"));
+})();
+</script>
+</body>
+</html>
