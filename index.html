@@ -144,6 +144,8 @@
   .pv-sheetwrap{overflow:auto;border:1px solid var(--keisen);border-radius:8px;background:#fff}
   .pv-foot{flex:0 0 auto;display:flex;gap:8px;padding:10px 14px calc(10px + var(--barClear));border-top:1px solid var(--keisen);background:var(--washi)}
 
+  .line-note{font-size:15px;font-weight:700;text-align:center;padding:18px 14px}
+  [hidden]{display:none!important}
   .ptag{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:10px;font-size:11.5px;font-weight:600;color:var(--sumi-soft)}
   .ptag select{width:auto;font-size:13px;padding:7px 26px 7px 9px}
   .ph-info{display:flex;align-items:center;justify-content:space-between;gap:8px;margin:2px 0 10px;font-size:12px;color:var(--sumi-soft)}
@@ -220,7 +222,7 @@
     <div class="head-text">
       <div class="brand">株式会社小林機械</div>
       <h1>下見シート</h1>
-      <p>現場で入力 → 写真を添付 → PDFを出力・共有</p>
+      <p>現場で入力 → 確認 → PDFを出力・共有</p>
     </div>
     <button class="reset-all" id="resetTop" type="button">
       <svg viewBox="0 0 24 24"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/></svg>
@@ -319,8 +321,13 @@
     </div>
   </section>
 
-  <!-- 写真 -->
+  <!-- 写真：今はLINEのアルバムで管理（添付機能は一時停止。仕組みを考えて再開予定） -->
   <section>
+    <div class="sec-label">写真</div>
+    <div class="card pad line-note">写真はLINEのアルバムに追加</div>
+  </section>
+
+  <section hidden>
     <div class="sec-label">写真<span class="cnt" id="phCnt">0枚</span></div>
     <div class="card pad">
       <div class="ptag">追加する写真の札：<select id="addMno"></select><select id="addKind"></select></div>
@@ -372,8 +379,8 @@
 <div class="output-menu" id="outputMenu" role="dialog" aria-modal="true">
   <div class="output-panel">
     <div class="output-title">出力</div>
-    <p class="output-note">A4横のPDFで出力します。記入しきれない分は自動で2枚目以降になります<br>写真帳は1ページに写真6枚です</p>
-    <div class="seg" id="outTarget" data-radio style="margin-bottom:4px"><button class="seg-btn on" type="button" data-v="sheet">下見シート</button><button class="seg-btn" type="button" data-v="photos">写真帳</button><button class="seg-btn" type="button" data-v="both">シート＋写真帳</button></div>
+    <p class="output-note">A4横のPDFで出力します。記入しきれない分は自動で2枚目以降になります</p>
+    <div class="seg" id="outTarget" data-radio hidden style="margin-bottom:4px"><button class="seg-btn on" type="button" data-v="sheet">下見シート</button><button class="seg-btn" type="button" data-v="photos">写真帳</button><button class="seg-btn" type="button" data-v="both">シート＋写真帳</button></div>
     <button class="output-choice primary" type="button" id="outShare">共有</button>
     <button class="output-choice" type="button" id="outPdf">PDF保存</button>
     <button class="output-cancel" type="button" data-close>キャンセル</button>
