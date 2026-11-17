@@ -182,8 +182,9 @@
   .sheet .mt tr.mrow td{border-top:1.6px solid #000}
   .sheet .site{margin-top:-1px}
   .sheet .site th{text-align:left;font-size:10.5px}
-  .sheet .site td{height:90px;vertical-align:top;padding:6px 10px;font-size:11.5px;line-height:1.7}
+  .sheet .site td{min-height:90px;height:90px;vertical-align:top;padding:6px 10px;font-size:11.5px;line-height:1.7}
   .sheet .site .cols{display:flex;gap:28px}
+  .sheet .site td.ref{vertical-align:middle;text-align:center;font-size:14px;font-weight:700;letter-spacing:.04em}
   .sheet .site .cols>div{flex:1;min-width:0}
 </style>
 </head>
@@ -617,35 +618,35 @@
     return `<table class="site"><tr><th>現場状況・搬出条件</th></tr><tr><td><div class="cols"><div>${items.slice(0,half).map(li).join("")}</div><div>${items.slice(half).map(li).join("")}</div></div></td></tr></table>`;
   }
 
-  // 計測用の作業領域で1ページずつ詰めていき、はみ出したら次のページへ
+  // 全ページ同じ枠組み（ヘッダー＋機械表＋現場状況欄）。現場状況は1枚目のみ記載、
+  // 入りきらない機械を2枚目以降へ送り、余白は空欄ブロックで埋めて高さをそろえる。
   function buildPages(){
     const d=collect();
     const work=$("#measure"); work.innerHTML="";
     const pages=[];
-    const over=pg=>pg.el.scrollHeight>PAGE_H+1;
-    function newPage(withTable){
+    const SITE_MIN=90;
+    const over=el=>el.scrollHeight>PAGE_H+1;
+    function newPage(){
+      const first=pages.length===0;
       const el=document.createElement("div"); el.className="sheet measuring";
-      el.innerHTML=`<div class="ttl"><b>下見シート</b><span class="pg"></span></div>`+(pages.length===0?headerHtml(d):`<div class="cont">高コン ${esc(d.konNo)}　${esc(d.siteName)}（続き）</div>`);
-      let tbody=null;
-      if(withTable){const t=document.createElement("table");t.className="mt";t.innerHTML=MT_HEAD+"<tbody></tbody>";el.appendChild(t);tbody=t.tBodies[0]}
+      el.innerHTML=`<div class="ttl"><b>下見シート</b><span class="pg"></span></div>`+headerHtml(d)+
+        `<table class="mt">${MT_HEAD}<tbody></tbody></table>`+
+        (first?siteHtml(d):`<table class="site"><tr><th>現場状況・搬出条件</th></tr><tr><td class="ref">※現場状況は1枚目に記載してあります</td></tr></table>`);
       work.appendChild(el);
-      const pg={el,tbody}; pages.push(pg); return pg;
+      const pg={el,tbody:$(".mt tbody",el),siteTd:$(".site td",el)}; pages.push(pg); return pg;
     }
-    let pg=newPage(true), blocks=0;
-    const addRow=(html,force)=>{
-      const tr=document.createElement("tr");tr.className="mrow";tr.innerHTML=html;
-      if(!pg.tbody){pg=newPage(true)}
+    const mkRow=html=>{const tr=document.createElement("tr");tr.className="mrow";tr.innerHTML=html;return tr};
+    let pg=newPage();
+    d.machines.forEach((m,i)=>{
+      const tr=mkRow(machineRow(m,i+1));
       pg.tbody.appendChild(tr);
-      if(over(pg)){
-        if(!force||pg.tbody.rows.length>1){tr.remove();if(!force)return false;pg=newPage(true);pg.tbody.appendChild(tr)}
-      }
-      blocks++; return true;
-    };
-    d.machines.forEach((m,i)=>addRow(machineRow(m,i+1),true));
-    while(blocks<4){ if(!addRow(machineRow(null,""),false)) break; }
-    const tmp=document.createElement("div");tmp.innerHTML=siteHtml(d);const site=tmp.firstElementChild;
-    pg.el.appendChild(site);
-    if(over(pg)){site.remove();pg=newPage(false);pg.el.appendChild(site)}
+      if(over(pg.el)&&pg.tbody.rows.length>1){tr.remove();pg=newPage();pg.tbody.appendChild(tr)}
+    });
+    pages.forEach(p=>{
+      for(;;){const tr=mkRow(machineRow(null,""));p.tbody.appendChild(tr);if(over(p.el)){tr.remove();break}}
+      const left=PAGE_H-p.el.scrollHeight;
+      if(left>0) p.siteTd.style.height=(Math.max(SITE_MIN,p.siteTd.offsetHeight)+left)+"px";
+    });
     pages.forEach((p,i)=>{p.el.classList.remove("measuring");$(".pg",p.el).textContent=`${i+1} / ${pages.length}`});
     const els=pages.map(p=>p.el); work.innerHTML=""; return els;
   }
