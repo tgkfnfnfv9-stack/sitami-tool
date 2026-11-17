@@ -393,11 +393,14 @@
 <div class="output-menu" id="aiMenu" role="dialog" aria-modal="true">
   <div class="output-panel">
     <div class="output-title">AI取込</div>
-    <p class="output-note">AIが作成した下見シートのJSONを貼り付けてください<br>追加・更新：今の入力に足していく（空の項目は消さない）／置き換え：全部入れ替え</p>
+    <p class="output-note">AIの返答（JSONまたはリンク）をコピーして下のボタンを押してください<br>追加・更新：今の入力に足していく（空の項目は消さない）／置き換え：全部入れ替え</p>
     <div class="seg" id="aiMode" data-radio style="margin-bottom:8px"><button class="seg-btn on" type="button" data-v="merge">追加・更新</button><button class="seg-btn" type="button" data-v="replace">置き換え</button></div>
+    <button class="output-choice primary" type="button" id="aiClip">📋 コピーしたAIの返答を取り込む</button>
+    <p class="ai-or" style="font-size:12px;color:#666;text-align:center;margin:12px 0 6px">または、下に貼り付け</p>
     <textarea class="ai-text" id="aiText" placeholder='{"konNo":"242620","siteName":"スギノマシン","machines":[ ... ]}'></textarea>
     <p class="ai-err" id="aiErr"></p>
-    <button class="output-choice primary" type="button" id="aiApply">取り込む</button>
+    <button class="output-choice" type="button" id="aiApply">貼り付けた内容を取り込む</button>
+    <button class="output-choice" type="button" id="aiPrompt">AIへの指示文をコピー</button>
     <button class="output-cancel" type="button" data-close>キャンセル</button>
   </div>
 </div>
@@ -715,8 +718,24 @@
   });
 
   /* ---------- AI取込 ---------- */
+  /* AIが作ったリンク（https://…/sitami-tool/#ai=データ）のデータを読む。encodeURIComponent・base64url・生JSONに対応 */
+  function aiDecodeLink(payload){
+    let text=str(payload).trim();
+    if(!text) throw new Error("リンクにデータが入っていません");
+    try{ text=decodeURIComponent(text); }catch(e){}
+    text=text.trim();
+    if(text.startsWith("{")) return text;
+    try{
+      let b64=text.replace(/-/g,"+").replace(/_/g,"/").replace(/\s+/g,""); while(b64.length%4) b64+="=";
+      const bin=atob(b64), bytes=new Uint8Array(bin.length); for(let i=0;i<bin.length;i++) bytes[i]=bin.charCodeAt(i);
+      return new TextDecoder("utf-8").decode(bytes);
+    }catch(e){ throw new Error("リンクのデータを読み取れません。AIにもう一度リンクを作ってもらうか、JSONを貼り付けてください"); }
+  }
+  function aiLinkPayload(text){ const m=/[#&]ai=([^\s#&]+)/.exec(str(text)); return m&&m[1]!=="1"?m[1]:null; }
   function parseAiText(t){
-    t=str(t).replace(/```(?:json)?/gi,"").trim();
+    t=str(t).trim();
+    if(!t.startsWith("{")){ const linked=aiLinkPayload(t); if(linked) t=aiDecodeLink(linked); }
+    t=t.replace(/```(?:json)?/gi,"").trim();
     if(t.startsWith("[")) throw new Error("[ ] ではなく { } で始まるJSONを貼ってください");
     const a=t.indexOf("{"), b=t.lastIndexOf("}");
     if(a<0||b<=a) throw new Error("JSONが見つかりません");
@@ -1148,20 +1167,47 @@
     });
     refreshAddMno();
   }
-  $("#aiApply").addEventListener("click",async()=>{
+  async function applyAiText(text){
+    $("#aiErr").textContent="";
     try{
-      const d=parseAiText($("#aiText").value), mode=segVal($("#aiMode"))||"merge";
+      const d=parseAiText(text), mode=segVal($("#aiMode"))||"merge";
       if(!d||typeof d!=="object"||Array.isArray(d)) throw new Error("{ } で始まるJSONを貼ってください");
       if(mode==="replace"&&!await ask("今の入力を、貼り付けた内容ですべて置き換えますか？","置き換える")) return;
       if(mode==="replace") restore(d); else mergeData(d);
       saveDraft(); close("aiMenu"); $("#aiText").value="";
       toast(mode==="replace"?"AIのデータで置き換えました":"AIのデータを追加・更新しました");
     }catch(err){$("#aiErr").textContent="取り込めませんでした："+err.message}
+  }
+  $("#aiApply").addEventListener("click",()=>applyAiText($("#aiText").value));
+  $("#aiClip").addEventListener("click",async()=>{
+    let text="";
+    try{ text=await navigator.clipboard.readText(); }
+    catch(e){ $("#aiErr").textContent="クリップボードを読めませんでした。下の欄に貼り付けて「貼り付けた内容を取り込む」を押してください"; $("#aiText").focus(); return; }
+    if(!str(text).trim()){ $("#aiErr").textContent="クリップボードが空です。AIの返答をコピーしてから押してください"; return; }
+    $("#aiText").value=text; applyAiText(text);
   });
+  const AI_PROMPT="下見シートを作ります。リポジトリ tgkfnfnfv9-stack/sitami-tool の AI_SCHEMA.md（https://github.com/tgkfnfnfv9-stack/sitami-tool/blob/main/AI_SCHEMA.md）の形式でデータ（JSON）を作ってください。分からない項目は空のまま（推測しない）。\n【返し方】\n①リンク：JSONを改行なしの1行にしてencodeURIComponentで変換し、https://tgkfnfnfv9-stack.github.io/sitami-tool/#ai= の後ろに付けたURL。コード実行が使えるなら必ずコードで作成（Pythonなら urllib.parse.quote(json.dumps(data,ensure_ascii=False,separators=(',',':')),safe='')）。使えない場合は省略\n②同じJSONを```jsonのコードブロックで\n（ここに下見メモ・手書きシートの写真などを貼る）";
+  $("#aiPrompt").addEventListener("click",async()=>{
+    let ok=false; try{ await navigator.clipboard.writeText(AI_PROMPT); ok=true; }catch(e){}
+    $("#aiErr").textContent=ok?"指示文をコピーしました。AIに貼り付けて下見メモ・写真を付けて送ってください。返ってきたリンクを押せば完成です":"コピーできませんでした";
+  });
+  /* AIが作ったリンクで開かれたら、そのまま取り込む（追加・更新：今の入力は消さない） */
+  function importAiFromLocation(){
+    let payload=null;
+    try{ payload=aiLinkPayload(location.hash); }catch(e){}
+    if(!payload) return false;
+    try{ history.replaceState(null,"",location.pathname+location.search); }catch(e){}
+    try{
+      const d=parseAiText(aiDecodeLink(payload));
+      if(!d||typeof d!=="object"||Array.isArray(d)) throw new Error("{ } で始まるJSONではありません");
+      mergeData(d); saveDraft(); toast("AIのデータを追加・更新しました"); return true;
+    }catch(err){ $("#aiErr").textContent="取り込めませんでした："+err.message; open("aiMenu"); return false; }
+  }
 
   /* ---------- 起動 ---------- */
   if(!loadDraft()) addMachine();
   refreshAddMno();
+  importAiFromLocation();
   if(PHOTO_ENABLED&&window.indexedDB) DB.all().then(a=>{photos=Array.isArray(a)?a:[];renderPhotos()}).catch(()=>{});
   window.SitamiTool={collect,restore,mergeData,buildPages,makePdf,buildAiImages,batchPrompt,
     listPhotos:()=>sortedPhotos().map((p,i)=>({no:i+1,id:p.id,mno:p.mno,kind:p.kind,memo:p.memo,use:p.use})),addFiles};
