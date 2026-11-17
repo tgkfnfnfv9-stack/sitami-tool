@@ -53,6 +53,11 @@
   textarea{resize:vertical;line-height:1.6;min-height:84px}
   select{appearance:none;-webkit-appearance:none;background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'><path d='M2 4l4 4 4-4' stroke='%235b574d' fill='none' stroke-width='1.6'/></svg>");background-repeat:no-repeat;background-position:right 10px center;padding-right:28px}
   input:focus,select:focus,textarea:focus{outline:2px solid var(--ai-soft);outline-offset:0;border-color:var(--ai-soft);background:#fff}
+  input[type="date"],input[type="month"]{-webkit-appearance:none;appearance:none;display:block;max-width:100%;min-height:44px;text-align:left}
+  input::-webkit-date-and-time-value{text-align:left}
+  .m-del{flex:0 0 auto;width:30px;height:30px;border-radius:8px;border:1px solid var(--keisen-strong);background:#fff;color:var(--sumi-soft);font-size:17px;line-height:1;display:flex;align-items:center;justify-content:center;font-family:inherit;padding:0}
+  .ask-msg{font-size:14px;font-weight:700;text-align:center;margin:4px 0 12px;line-height:1.6;white-space:pre-line}
+  .output-choice.danger{background:var(--ng);border-color:var(--ng);color:#fff}
   input[inputmode="numeric"]{font-variant-numeric:tabular-nums;text-align:right}
   .yen{position:relative}
   .yen input{padding-left:24px}
@@ -118,7 +123,7 @@
   .btn-share{background:var(--shu);color:#fff;box-shadow:0 4px 14px rgba(20,19,17,.28)}
   .btn:active{transform:translateY(1px)}
 
-  .toast{position:fixed;left:50%;bottom:calc(86px + var(--barClear));transform:translateX(-50%) translateY(20px);background:var(--sumi);color:#fff;font-size:13px;padding:11px 18px;border-radius:10px;opacity:0;transition:.25s;z-index:300;pointer-events:none;max-width:90%;text-align:center}
+  .toast{position:fixed;left:50%;bottom:calc(86px + var(--barClear));transform:translateX(-50%) translateY(20px);background:var(--sumi);color:#fff;font-size:13px;padding:11px 18px;border-radius:10px;opacity:0;transition:.25s;z-index:255;pointer-events:none;max-width:90%;text-align:center}
   .toast.on{opacity:1;transform:translateX(-50%) translateY(0)}
 
   /* ダイアログ */
@@ -237,12 +242,12 @@
     <div class="card pad">
       <div class="kon-card">
         <span class="k">高コン</span>
-        <input type="text" inputmode="numeric" data-key="konNo" placeholder="242620">
+        <input type="text" inputmode="numeric" data-key="konNo" placeholder="例：242620">
       </div>
       <div class="grid3">
         <div class="field"><label>下見日</label><input type="date" data-key="inspectDate"></div>
-        <div class="field"><label>担当</label><input type="text" data-key="tanto" placeholder="長谷川"></div>
-        <div class="field"><label>下見者</label><input type="text" data-key="inspector" placeholder="平近"></div>
+        <div class="field"><label>担当</label><input type="text" data-key="tanto" placeholder="例：長谷川"></div>
+        <div class="field"><label>下見者</label><input type="text" data-key="inspector" placeholder="例：平近"></div>
       </div>
     </div>
   </section>
@@ -253,15 +258,15 @@
     <div class="card pad">
       <div class="sub-h">依頼会社</div>
       <div class="grid2">
-        <div class="field"><label>会社名</label><input type="text" data-key="clientCompany" placeholder="三立興産"></div>
-        <div class="field"><label>担当者名</label><input type="text" data-key="clientPerson" placeholder="堀澤様"></div>
+        <div class="field"><label>会社名</label><input type="text" data-key="clientCompany" placeholder="例：三立興産"></div>
+        <div class="field"><label>担当者名</label><input type="text" data-key="clientPerson" placeholder="例：堀澤様"></div>
       </div>
       <div class="sub-h">現場</div>
       <div class="grid2">
-        <div class="field"><label>現場名</label><input type="text" data-key="siteName" placeholder="スギノマシン"></div>
-        <div class="field"><label>担当者名</label><input type="text" data-key="sitePerson" placeholder="金盛様"></div>
-        <div class="field full"><label>住所</label><input type="text" data-key="siteAddress" placeholder="富山県滑川市東山2880"></div>
-        <div class="field full"><label>TEL</label><input type="tel" data-key="siteTel" placeholder="076-477-2561"></div>
+        <div class="field"><label>現場名</label><input type="text" data-key="siteName" placeholder="例：スギノマシン"></div>
+        <div class="field"><label>担当者名</label><input type="text" data-key="sitePerson" placeholder="例：金盛様"></div>
+        <div class="field full"><label>住所</label><input type="text" data-key="siteAddress" placeholder="例：富山県滑川市東山2880"></div>
+        <div class="field full"><label>TEL</label><input type="tel" data-key="siteTel" placeholder="例：076-477-2561"></div>
       </div>
       <div class="sub-h">申請・手配</div>
       <div class="grid2">
@@ -282,10 +287,10 @@
     <div class="sec-label">案件概要</div>
     <div class="card pad">
       <div class="grid2">
-        <div class="field"><label>加工物</label><input type="text" data-key="workpiece" placeholder="鉄"></div>
+        <div class="field"><label>加工物</label><input type="text" data-key="workpiece" placeholder="例：鉄"></div>
         <div class="field"><label>見積期限</label><input type="date" data-key="quoteDeadline"></div>
-        <div class="field full"><label>出す理由</label><input type="text" data-key="reason" placeholder="使用頻度少ない為"></div>
-        <div class="field full"><label>搬出時期</label><input type="text" data-key="carryOutTiming" placeholder="12月中旬〜2027年1月頃（現在未使用の為ゴミ）"></div>
+        <div class="field full"><label>出す理由</label><input type="text" data-key="reason" placeholder="例：使用頻度少ない為"></div>
+        <div class="field full"><label>搬出時期</label><input type="text" data-key="carryOutTiming" placeholder="例：12月中旬〜2027年1月頃（現在未使用の為ゴミ）"></div>
       </div>
     </div>
   </section>
@@ -314,7 +319,7 @@
       </div>
       <div class="field">
         <label>メモ（帳票の「仕様・現場状況」欄に印字）</label>
-        <textarea data-key="siteNotes" rows="7" placeholder="※機械左後ろ側にピットありの為、避けて搬出する必要あり（今はフタしてある）&#10;機械周辺の机やラックはどかしてもらえる&#10;3.5t、7tフォーク、5t、2.8tクレーン借用可&#10;トラック門の中へ進入OK&#10;敷地内への進入口注意（南東側（畑側）から入る＝東門）"></textarea>
+        <textarea data-key="siteNotes" rows="7" placeholder="例：※機械左後ろ側にピットありの為、避けて搬出する必要あり（今はフタしてある）&#10;機械周辺の机やラックはどかしてもらえる&#10;3.5t、7tフォーク、5t、2.8tクレーン借用可&#10;トラック門の中へ進入OK&#10;敷地内への進入口注意（南東側（畑側）から入る＝東門）"></textarea>
       </div>
     </div>
   </section>
@@ -411,25 +416,26 @@
       <span class="m-title"></span>
       <span class="m-badges"><span class="badge" data-badge="want">−</span><span class="badge" data-badge="op">−</span></span>
       <span class="chev">▼</span>
+      <button class="m-del" type="button" aria-label="この機械を削除">×</button>
     </div>
     <div class="m-body">
       <div class="sub-h">機械</div>
       <div class="grid2">
-        <div class="field full"><label>機械名</label><input type="text" data-m="name" placeholder="NC内面研削盤"></div>
-        <div class="field"><label>メーカー</label><input type="text" data-m="maker" placeholder="オークマ"></div>
-        <div class="field"><label>型式</label><input type="text" data-m="model" placeholder="GI-10NⅡ"></div>
+        <div class="field full"><label>機械名</label><input type="text" data-m="name" placeholder="例：NC内面研削盤"></div>
+        <div class="field"><label>メーカー</label><input type="text" data-m="maker" placeholder="例：オークマ"></div>
+        <div class="field"><label>型式</label><input type="text" data-m="model" placeholder="例：GI-10NⅡ"></div>
         <div class="field"><label>年式</label><input type="month" data-m="year"></div>
-        <div class="field"><label>CPU</label><input type="text" data-m="cpu" placeholder="OSP-P300GA"></div>
-        <div class="field full"><label>機械番号</label><input type="text" data-m="serial" placeholder="221031"></div>
+        <div class="field"><label>CPU</label><input type="text" data-m="cpu" placeholder="例：OSP-P300GA"></div>
+        <div class="field full"><label>機械番号</label><input type="text" data-m="serial" placeholder="例：221031"></div>
       </div>
       <div class="sub-h">仕様・付属品</div>
       <div style="display:flex;flex-direction:column;gap:10px">
-        <div class="field"><label>仕様</label><textarea data-m="spec" rows="5" placeholder="工作主軸 100〜1000min-1&#10;内研軸 20000〜40000min-1（ベルト駆動式）&#10;貫通穴径 70φ&#10;ストローク X300、Z350"></textarea></div>
-        <div class="field"><label>付属品</label><textarea data-m="acc" rows="5" placeholder="9吋スクロールチャック（キタガワ JN09T）&#10;固定具&#10;ロータリードレッサー"></textarea></div>
+        <div class="field"><label>仕様</label><textarea data-m="spec" rows="5" placeholder="例：工作主軸 100〜1000min-1&#10;内研軸 20000〜40000min-1（ベルト駆動式）&#10;貫通穴径 70φ&#10;ストローク X300、Z350"></textarea></div>
+        <div class="field"><label>付属品</label><textarea data-m="acc" rows="5" placeholder="例：9吋スクロールチャック（キタガワ JN09T）&#10;固定具&#10;ロータリードレッサー"></textarea></div>
       </div>
       <div class="hint" style="margin-top:6px">1行に1項目ずつ入力すると帳票で見やすくなります</div>
       <div class="sub-h">機械状態</div>
-      <div class="field"><textarea data-m="cond" rows="4" placeholder="通電可・各軸動作OK&#10;外観良好（塗装ハゲ少々）&#10;オイル漏れなし&#10;摺動面キズなし"></textarea></div>
+      <div class="field"><textarea data-m="cond" rows="4" placeholder="例：通電可・各軸動作OK&#10;外観良好（塗装ハゲ少々）&#10;オイル漏れなし&#10;摺動面キズなし"></textarea></div>
       <div class="sub-h">確認</div>
       <div class="grid2">
         <div class="field">
@@ -493,6 +499,14 @@
   </div>
 </div>
 
+<div class="output-menu" id="askMenu" role="dialog" aria-modal="true">
+  <div class="output-panel">
+    <p class="ask-msg" id="askMsg"></p>
+    <button class="output-choice danger" id="askOk" type="button">OK</button>
+    <button class="output-cancel" id="askNo" type="button">キャンセル</button>
+  </div>
+</div>
+
 <input type="file" id="inCam" accept="image/*" capture="environment" style="display:none">
 <input type="file" id="inPick" accept="image/*" multiple style="display:none">
 <input type="file" id="inDraft" accept="application/json,.json" style="display:none">
@@ -508,6 +522,16 @@
   const $=(s,r=document)=>r.querySelector(s), $$=(s,r=document)=>[...r.querySelectorAll(s)];
   let tt; const toast=m=>{const t=$("#toast");t.textContent=m;t.classList.add("on");clearTimeout(tt);tt=setTimeout(()=>t.classList.remove("on"),2000)};
   const esc=s=>String(s??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+  // ブラウザ標準のconfirmはiPhoneで止められることがあるため、ツール内の確認画面を使う
+  function ask(msg,ok){
+    return new Promise(res=>{
+      const m=document.getElementById("askMenu"), okb=document.getElementById("askOk"), nob=document.getElementById("askNo");
+      document.getElementById("askMsg").textContent=msg; okb.textContent=ok||"OK";
+      const done=v=>{m.classList.remove("on");okb.onclick=nob.onclick=m.onclick=null;res(v)};
+      okb.onclick=()=>done(true); nob.onclick=()=>done(false); m.onclick=e=>{if(e.target===m)done(false)};
+      m.classList.add("on");
+    });
+  }
   const overlay=(on,msg)=>{$("#ovText").textContent=msg||"処理中…";$("#overlay").classList.toggle("on",!!on)};
 
   const KEYS=["konNo","inspectDate","tanto","inspector","clientCompany","clientPerson","siteName","sitePerson","siteAddress","siteTel","workpiece","reason","carryOutTiming","quoteDeadline","siteNotes"];
@@ -547,11 +571,14 @@
     const c=$("#tplMachine").content.firstElementChild.cloneNode(true);
     $$(".m-card",box).forEach(x=>x.classList.add("collapsed"));
     box.appendChild(c);
-    $(".m-head",c).addEventListener("click",()=>c.classList.toggle("collapsed"));
-    $(".del-row",c).addEventListener("click",()=>{
+    $(".m-head",c).addEventListener("click",e=>{if(!e.target.closest(".m-del"))c.classList.toggle("collapsed")});
+    const del=async()=>{
       if($$(".m-card",box).length<=1){toast("機械は1台以上必要です");return}
-      if(confirm("この機械を削除しますか？")){c.remove();renumber();scheduleSave()}
-    });
+      const no=$$(".m-card",box).indexOf(c)+1, name=$('[data-m="name"]',c).value.trim();
+      if(await ask(`No.${no}${name?"「"+name+"」":""}を削除しますか？`,"削除する")){c.remove();renumber();scheduleSave();toast(`No.${no}を削除しました`)}
+    };
+    $(".del-row",c).addEventListener("click",del);
+    $(".m-del",c).addEventListener("click",del);
     c.addEventListener("input",()=>refreshHead(c));
     if(data){
       MKEYS.forEach(k=>{const el=$(`[data-m="${k}"]`,c);let v=str(data[k]);if(k==="year")v=normMonth(v);if(k==="price")v=v.replace(/[^\d]/g,"");el.value=v});
@@ -560,7 +587,7 @@
     refreshHead(c); renumber();
     return c;
   }
-  $("#addMachine").addEventListener("click",()=>{addMachine();scheduleSave()});
+  $("#addMachine").addEventListener("click",()=>{const c=addMachine();scheduleSave();toast(`No.${$$(".m-card",box).length}を追加しました`);setTimeout(()=>{const y=c.getBoundingClientRect().top+window.pageYOffset-10;window.scrollTo({top:Math.max(0,y),behavior:"smooth"})},50)});
   $$("#siteChips .chip").forEach(ch=>ch.addEventListener("click",()=>{ch.classList.toggle("on");scheduleSave()}));
 
   /* ---------- 値の正規化（AI取込・読込用） ---------- */
@@ -608,8 +635,8 @@
   window.addEventListener("pagehide",saveDraft);
   function loadDraft(){try{const s=localStorage.getItem(DRAFT_KEY);if(s){restore(JSON.parse(s));$("#savedNote").textContent="前回の下書きを復元しました";return true}}catch(e){}return false}
   function clearAll(){try{localStorage.removeItem(DRAFT_KEY)}catch(e){} clearPhotos(); restore({}); $("#savedNote").textContent="";window.scrollTo({top:0})}
-  $("#clearBtn").addEventListener("click",()=>{if(confirm("下書きを消去して、入力と写真をすべて空にしますか？")){clearAll();toast("下書きを消去しました")}});
-  $("#resetTop").addEventListener("click",()=>{if(confirm("入力をすべてリセットしますか？（下書きと写真も消えます）")){clearAll();toast("リセットしました")}});
+  $("#clearBtn").addEventListener("click",async()=>{if(await ask("下書きを消去して、入力と写真をすべて空にしますか？","消去する")){clearAll();toast("下書きを消去しました")}});
+  $("#resetTop").addEventListener("click",async()=>{if(await ask("入力をすべてリセットしますか？\n（下書きと写真も消えます）","リセットする")){clearAll();toast("リセットしました")}});
 
   /* ---------- ダイアログ ---------- */
   const open=id=>$("#"+id).classList.add("on");
@@ -640,7 +667,7 @@
   $("#btnLoad").addEventListener("click",()=>$("#inDraft").click());
   $("#inDraft").addEventListener("change",async e=>{
     const f=e.target.files[0]; e.target.value=""; if(!f) return;
-    try{const d=JSON.parse(await f.text());if(!confirm("読み込んだ内容で今の入力を置き換えますか？"))return;restore(d);saveDraft();toast("読み込みました")}
+    try{const d=JSON.parse(await f.text());if(!await ask("読み込んだ内容で今の入力を置き換えますか？","置き換える"))return;restore(d);saveDraft();toast("読み込みました")}
     catch(err){toast("読み込めませんでした："+err.message)}
   });
 
@@ -826,7 +853,7 @@
   ["#phMno","#phKind","#phMemo"].forEach(s=>$(s).addEventListener("change",saveEdit));
   $("#phUse").addEventListener("click",()=>setTimeout(saveEdit,0));
   $("#phDel").addEventListener("click",async()=>{
-    if(!confirm("この写真を削除しますか？")) return;
+    if(!await ask("この写真を削除しますか？","削除する")) return;
     try{await DB.del(editId)}catch(e){} photos=photos.filter(p=>p.id!==editId); close("phMenu"); renderPhotos(); toast("削除しました");
   });
 
