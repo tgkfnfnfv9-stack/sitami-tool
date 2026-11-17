@@ -210,6 +210,9 @@
   .sheet .site th{text-align:left;font-size:10.5px}
   .sheet .site td{min-height:90px;height:90px;vertical-align:top;padding:6px 10px;font-size:11.5px;line-height:1.7}
   .sheet .site .cols{display:flex;gap:28px}
+  .sheet .mt th.sm{font-size:8.5px;padding:4px 2px;white-space:nowrap}
+  .sheet .contd{color:#555;font-size:10px;vertical-align:top}
+  .sheet .site .more{text-align:right;font-size:10.5px;font-weight:700;margin-top:4px}
   .sheet .site td.ref{vertical-align:middle;text-align:center;font-size:14px;font-weight:700;letter-spacing:.04em}
   .sheet .site .cols>div{flex:1;min-width:0}
 </style>
@@ -241,8 +244,8 @@
         <span class="k">高コン</span>
         <input type="text" inputmode="numeric" data-key="konNo" placeholder="例：242620">
       </div>
-      <div class="grid3">
-        <div class="field"><label>下見日</label><input type="date" data-key="inspectDate"></div>
+      <div class="grid2">
+        <div class="field full"><label>下見日</label><input type="date" data-key="inspectDate"></div>
         <div class="field"><label>担当</label><input type="text" data-key="tanto" placeholder="例：長谷川"></div>
         <div class="field"><label>下見者</label><input type="text" data-key="inspector" placeholder="例：平近"></div>
       </div>
@@ -303,7 +306,7 @@
   <section>
     <div class="sec-label">現場状況・搬出条件</div>
     <div class="card pad">
-      <div class="hint" style="margin-bottom:8px">タップでチェック（メモにも反映予定）</div>
+      <div class="hint" style="margin-bottom:8px">タップでチェック（帳票の現場状況欄に印字）</div>
       <div class="chips" id="siteChips">
         <button class="chip" type="button">ピットあり</button>
         <button class="chip" type="button">周辺の物を移動してもらえる</button>
@@ -390,7 +393,7 @@
 <div class="output-menu" id="aiMenu" role="dialog" aria-modal="true">
   <div class="output-panel">
     <div class="output-title">AI取込</div>
-    <p class="output-note">AIが作成した下見シートJSONを貼り付けてください（形式は AI_SCHEMA.md）<br>追加・更新：今の入力に足していく（写真を分けて渡したとき）／置き換え：全部入れ替え</p>
+    <p class="output-note">AIが作成した下見シートのJSONを貼り付けてください<br>追加・更新：今の入力に足していく（空の項目は消さない）／置き換え：全部入れ替え</p>
     <div class="seg" id="aiMode" data-radio style="margin-bottom:8px"><button class="seg-btn on" type="button" data-v="merge">追加・更新</button><button class="seg-btn" type="button" data-v="replace">置き換え</button></div>
     <textarea class="ai-text" id="aiText" placeholder='{"konNo":"242620","siteName":"スギノマシン","machines":[ ... ]}'></textarea>
     <p class="ai-err" id="aiErr"></p>
@@ -425,7 +428,7 @@
         <div class="field full"><label>機械名</label><input type="text" data-m="name" placeholder="例：NC内面研削盤"></div>
         <div class="field"><label>メーカー</label><input type="text" data-m="maker" placeholder="例：オークマ"></div>
         <div class="field"><label>型式</label><input type="text" data-m="model" placeholder="例：GI-10NⅡ"></div>
-        <div class="field"><label>年式</label><input type="month" data-m="year"></div>
+        <div class="field"><label>年式</label><input type="text" data-m="year" placeholder="例：2019.6（年だけでも可）"></div>
         <div class="field"><label>CPU</label><input type="text" data-m="cpu" placeholder="例：OSP-P300GA"></div>
         <div class="field full"><label>機械番号</label><input type="text" data-m="serial" placeholder="例：221031"></div>
       </div>
@@ -518,17 +521,19 @@
 
 <script>
 /* 下見シート：入力・自動下書き・保存/読込(JSON)・AI取込・帳票プレビュー(A4横・自動改ページ)・PDF出力/共有
-   写真：縮小してIndexedDB保存・札付け・写真帳PDF・AI用書き出し（分割）・AI取込（追加・更新）。 */
+   写真機能（縮小保存・写真帳・AI用書き出し）はコードのみ残して一時停止中（PHOTO_ENABLED=false）。 */
 (function(){
   const $=(s,r=document)=>r.querySelector(s), $$=(s,r=document)=>[...r.querySelectorAll(s)];
   let tt; const toast=m=>{const t=$("#toast");t.textContent=m;t.classList.add("on");clearTimeout(tt);tt=setTimeout(()=>t.classList.remove("on"),2000)};
   const esc=s=>String(s??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
   // ブラウザ標準のconfirmはiPhoneで止められることがあるため、ツール内の確認画面を使う
+  let askDone=null;
   function ask(msg,ok){
+    if(askDone) askDone(false);
     return new Promise(res=>{
       const m=document.getElementById("askMenu"), okb=document.getElementById("askOk"), nob=document.getElementById("askNo");
       document.getElementById("askMsg").textContent=msg; okb.textContent=ok||"OK";
-      const done=v=>{m.classList.remove("on");okb.onclick=nob.onclick=m.onclick=null;res(v)};
+      const done=v=>{askDone=null;m.classList.remove("on");okb.onclick=nob.onclick=m.onclick=null;res(v)};askDone=done;
       okb.onclick=()=>done(true); nob.onclick=()=>done(false); m.onclick=e=>{if(e.target===m)done(false)};
       m.classList.add("on");
     });
@@ -579,8 +584,10 @@
     $(".del-row",c).addEventListener("click",del);
     $(".m-del",c).addEventListener("click",del);
     c.addEventListener("input",()=>refreshHead(c));
+    $('[data-m="year"]',c).addEventListener("change",e=>{e.target.value=normYear(e.target.value)});
+    $('[data-m="price"]',c).addEventListener("change",e=>{e.target.value=normPrice(e.target.value)});
     if(data){
-      MKEYS.forEach(k=>{const el=$(`[data-m="${k}"]`,c);let v=str(data[k]);if(k==="year")v=normMonth(v);if(k==="price")v=v.replace(/[^\d]/g,"");el.value=v});
+      MKEYS.forEach(k=>{const el=$(`[data-m="${k}"]`,c);let v=str(data[k]);if(k==="year")v=normYear(v);if(k==="price")v=normPrice(v);el.value=v});
       MSEGS.forEach(k=>setSeg($(`[data-mseg="${k}"]`,c),normMark(k,data[k])));
     }
     refreshHead(c); renumber();
@@ -592,15 +599,47 @@
   /* ---------- 値の正規化（AI取込・読込用） ---------- */
   const str=v=>v==null?"":String(v);
   const z=n=>String(n).padStart(2,"0");
-  function normDate(v){v=str(v).trim();const m=v.match(/^(\d{4})\D+(\d{1,2})\D+(\d{1,2})/);return m?`${m[1]}-${z(m[2])}-${z(m[3])}`:""}
-  function normMonth(v){v=str(v).trim();const m=v.match(/^(\d{4})(?:\D+(\d{1,2}))?/);return m?`${m[1]}-${z(m[2]||1)}`:""}
-  function normMark(k,v){
-    v=str(v).trim();
-    if(k==="manual") return /^(有|あり|true)$/i.test(v)?"有":/^(無|なし|false)$/i.test(v)?"無":"";
-    const map={"○":"○","〇":"○","◯":"○","o":"○","O":"○","△":"△","×":"×","x":"×","X":"×","✕":"×"};
-    const r=map[v]||""; return (k==="want"&&r==="△")?"":r;
+  // 全角→半角（NFKC）
+  const nfkc=v=>{v=str(v);try{v=v.normalize("NFKC")}catch(e){}return v.trim()};
+  // 和暦（明治/大正/昭和/平成/令和・M/T/S/H/R、元年）を西暦の「YYYY.残り」に
+  const ERA={"明治":1867,"大正":1911,"昭和":1925,"平成":1988,"令和":2018,"M":1867,"T":1911,"S":1925,"H":1988,"R":2018};
+  function eraToWest(v){
+    const m=v.match(/^(明治|大正|昭和|平成|令和|[MTSHRmtshr])\s*(元|\d{1,2})\s*(?:年|[.\/\-])?\s*(.*)$/);
+    if(!m) return v;
+    const base=ERA[m[1]]||ERA[m[1].toUpperCase()];
+    return `${base+(m[2]==="元"?1:+m[2])}${m[3]?"."+m[3]:""}`;
   }
-  function normNeed(v){v=str(v).trim();return v==="必要"?"必要":(v==="不必要"||v==="不要")?"不必要":""}
+  function normDate(v){
+    v=eraToWest(nfkc(v));
+    const m=v.match(/^(\d{4})(\d{2})(\d{2})$/)||v.match(/^(\d{4})\D+(\d{1,2})\D+(\d{1,2})/);
+    if(!m) return "";
+    const y=+m[1], mo=+m[2], d=+m[3], dt=new Date(y,mo-1,d);
+    if(mo<1||mo>12||d<1||dt.getMonth()!==mo-1) return "";
+    return `${y}-${z(mo)}-${z(d)}`;
+  }
+  // 年式：「2019.6」「2019」の形にそろえる。月が分からなければ年だけ。読めない書き方はそのまま残す
+  function normYear(v){
+    const raw=nfkc(v); if(!raw) return "";
+    const s=eraToWest(raw);
+    let m=s.match(/^(\d{4})(\d{2})$/)||s.match(/^(\d{4})\s*(?:年|[.\/\-])\s*(\d{1,2})(?!\d)/);
+    if(m&&+m[2]>=1&&+m[2]<=12) return `${m[1]}.${+m[2]}`;
+    m=s.match(/^(\d{4})\s*年?$/); if(m) return m[1];
+    return raw;
+  }
+  // 価格：円単位の数字に。「120万」「1.5万」「120万5000」「１２０」「1,500,000円」に対応
+  function normPrice(v){
+    const s=nfkc(v).replace(/[,，、\s円¥￥]/g,""); if(!s) return "";
+    const m=s.match(/^(\d+(?:\.\d+)?)万(\d*)$/);
+    if(m) return String(Math.round(parseFloat(m[1])*10000)+(m[2]?+m[2]:0));
+    return s.replace(/[^\d]/g,"");
+  }
+  function normMark(k,v){
+    v=nfkc(v); if(!v) return "";
+    if(k==="manual") return /^(有|あり|true|[○〇◯])/i.test(v)?"有":/^(無|なし|false|[×✕✖xX])/i.test(v)?"無":"";
+    const c=v[0], r=/[○〇◯oO]/.test(c)?"○":/[△▲]/.test(c)?"△":/[×✕✖xX]/.test(c)?"×":"";
+    return (k==="want"&&r==="△")?"":r;
+  }
+  function normNeed(v){v=nfkc(v);return /^(不必要|不要|無|なし)/.test(v)?"不必要":/^(必要|要|有|あり)/.test(v)?"必要":""}
 
   /* ---------- 収集・復元 ---------- */
   const keyEl=k=>$(`[data-key="${k}"]`);
@@ -619,8 +658,12 @@
     const chips=Array.isArray(d.siteChips)?d.siteChips.map(str):[];
     $$("#siteChips .chip").forEach(ch=>ch.classList.toggle("on",chips.includes(ch.textContent.trim())));
     box.innerHTML="";
-    const ms=Array.isArray(d.machines)&&d.machines.length?d.machines:[{}];
-    ms.forEach(m=>addMachine(m&&typeof m==="object"?m:{}));
+    const src=Array.isArray(d.machines)?d.machines.filter(m=>m&&typeof m==="object"):[];
+    const slots=[], rest=[];
+    src.forEach(m=>{const no=parseInt(m.no,10);if(no>0&&no<=50&&!slots[no-1])slots[no-1]=m;else rest.push(m)});
+    rest.forEach(m=>{let i=0;while(slots[i])i++;slots[i]=m});
+    for(let i=0;i<slots.length;i++) if(!slots[i]) slots[i]={};
+    (slots.length?slots:[{}]).forEach(m=>addMachine(m));
     const cards=$$(".m-card",box); cards.forEach((c,i)=>c.classList.toggle("collapsed",i>0));
   }
 
@@ -630,12 +673,13 @@
   function saveDraft(){
     try{localStorage.setItem(DRAFT_KEY,JSON.stringify(collect()));const n=new Date();$("#savedNote").textContent=`下書きを自動保存しました ${z(n.getHours())}:${z(n.getMinutes())}`}catch(e){}
   }
-  document.addEventListener("input",e=>{if(e.target.closest(".wrap"))scheduleSave()});
+  ["input","change"].forEach(ev=>document.addEventListener(ev,e=>{if(e.target.closest&&e.target.closest(".wrap"))scheduleSave()}));
+  document.addEventListener("visibilitychange",()=>{if(document.visibilityState==="hidden")saveDraft()});
   window.addEventListener("pagehide",saveDraft);
   function loadDraft(){try{const s=localStorage.getItem(DRAFT_KEY);if(s){restore(JSON.parse(s));$("#savedNote").textContent="前回の下書きを復元しました";return true}}catch(e){}return false}
-  function clearAll(){try{localStorage.removeItem(DRAFT_KEY)}catch(e){} clearPhotos(); restore({}); $("#savedNote").textContent="";window.scrollTo({top:0})}
-  $("#clearBtn").addEventListener("click",async()=>{if(await ask("下書きを消去して、入力と写真をすべて空にしますか？","消去する")){clearAll();toast("下書きを消去しました")}});
-  $("#resetTop").addEventListener("click",async()=>{if(await ask("入力をすべてリセットしますか？\n（下書きと写真も消えます）","リセットする")){clearAll();toast("リセットしました")}});
+  function clearAll(){try{localStorage.removeItem(DRAFT_KEY)}catch(e){} if(PHOTO_ENABLED) clearPhotos(); restore({}); $("#savedNote").textContent="";window.scrollTo({top:0})}
+  $("#clearBtn").addEventListener("click",async()=>{if(await ask("下書きを消去して、入力をすべて空にしますか？","消去する")){clearAll();toast("下書きを消去しました")}});
+  $("#resetTop").addEventListener("click",async()=>{if(await ask("入力をすべてリセットしますか？\n（下書きも消えます）","リセットする")){clearAll();toast("リセットしました")}});
 
   /* ---------- ダイアログ ---------- */
   const open=id=>$("#"+id).classList.add("on");
@@ -666,13 +710,14 @@
   $("#btnLoad").addEventListener("click",()=>$("#inDraft").click());
   $("#inDraft").addEventListener("change",async e=>{
     const f=e.target.files[0]; e.target.value=""; if(!f) return;
-    try{const d=JSON.parse(await f.text());if(!await ask("読み込んだ内容で今の入力を置き換えますか？","置き換える"))return;restore(d);saveDraft();toast("読み込みました")}
+    try{const d=JSON.parse(await f.text());if(!d||typeof d!=="object"||Array.isArray(d))throw new Error("下見シートのデータではありません");if(!await ask("読み込んだ内容で今の入力を置き換えますか？","置き換える"))return;restore(d);saveDraft();toast("読み込みました")}
     catch(err){toast("読み込めませんでした："+err.message)}
   });
 
   /* ---------- AI取込 ---------- */
   function parseAiText(t){
     t=str(t).replace(/```(?:json)?/gi,"").trim();
+    if(t.startsWith("[")) throw new Error("[ ] ではなく { } で始まるJSONを貼ってください");
     const a=t.indexOf("{"), b=t.lastIndexOf("}");
     if(a<0||b<=a) throw new Error("JSONが見つかりません");
     return JSON.parse(t.slice(a,b+1));
@@ -682,9 +727,10 @@
 
   /* ---------- 帳票（A4横・自動改ページ） ---------- */
   const fmtD=s=>{if(!s)return"";const[y,m,d]=s.split("-");return d?`${+m}/${+d}`:`${y}.${+m}`};
-  const lines=t=>str(t).split(/\n/).map(x=>x.replace(/^[・\-\s]+/,"").trim()).filter(Boolean);
+  // 行頭の「・」「- 」だけ取る（「-0.005mm」のマイナスは残す）
+  const lines=t=>str(t).split(/\n/).map(x=>x.replace(/^\s*(?:・\s*|-\s+)?/,"").trim()).filter(Boolean);
   const li=x=>`<div class="li"><span>・</span><span>${esc(x)}</span></div>`;
-  const yen=v=>{const n=str(v).replace(/\D/g,"");return n?"¥"+Number(n).toLocaleString():""};
+  const yen=v=>{const n=normPrice(v);return n?"¥"+Number(n).toLocaleString():""};
   const PAGE_H=794, CONTENT_H=PAGE_H-56;
 
   function headerHtml(d){
@@ -697,48 +743,84 @@
   <tr><td colspan="2">道路使用許可申請　${req(d.roadPermit)}　　　ガードマン　${req(d.guardman)}</td><th>見積期限</th><td class="v">${esc(fmtD(d.quoteDeadline))}</td><th>下見者</th><td class="v">${esc(d.inspector)}</td></tr>
 </table>`;
   }
-  const MT_HEAD=`<colgroup><col style="width:30px"><col style="width:100px"><col style="width:92px"><col style="width:74px"><col><col style="width:150px"><col style="width:160px"><col style="width:60px"><col style="width:38px"><col style="width:62px"><col style="width:58px"><col style="width:78px"></colgroup>
-  <thead><tr><th>No.</th><th>機械名</th><th>メーカー<br>型式</th><th>年式<br>CPU</th><th>仕様</th><th>付属品</th><th>機械状態</th><th>機械番号</th><th>取説<br>有/無</th><th>欲しい○<br>欲しくない×</th><th>動作確認<br>○△×</th><th>仕入価格</th></tr></thead>`;
-  function machineRow(m,no){
+  const MT_HEAD=`<colgroup><col style="width:30px"><col style="width:100px"><col style="width:92px"><col style="width:74px"><col><col style="width:150px"><col style="width:160px"><col style="width:56px"><col style="width:38px"><col style="width:70px"><col style="width:58px"><col style="width:74px"></colgroup>
+  <thead><tr><th>No.</th><th>機械名</th><th>メーカー<br>型式</th><th>年式<br>CPU</th><th>仕様</th><th>付属品</th><th>機械状態</th><th>機械番号</th><th class="sm">取説<br>有/無</th><th class="sm">欲しい○<br>欲しくない×</th><th class="sm">動作確認<br>○△×</th><th>仕入価格</th></tr></thead>`;
+  // a〜b行目だけ（仕様・付属品・機械状態）。cont=続きの行
+  function machineRow(m,no,a=0,b=Infinity,cont=false){
     m=m||{};
-    return `<td class="c blk">${no||""}</td><td>${esc(m.name)}</td><td><div class="two"><div>${esc(m.maker)}</div><div>${esc(m.model)}</div></div></td><td><div class="two"><div>${esc(m.year?fmtD(m.year):"")}</div><div>${esc(m.cpu)}</div></div></td>`+
-      `<td class="list">${lines(m.spec).map(li).join("")}</td><td class="list">${lines(m.acc).map(li).join("")}</td><td class="list">${lines(m.cond).map(li).join("")}</td>`+
+    const L=k=>`<td class="list">${lines(m[k]).slice(a,b).map(li).join("")}</td>`;
+    if(cont) return `<td class="c blk">${no}</td><td class="contd">（No.${no} 続き）</td><td></td><td></td>${L("spec")}${L("acc")}${L("cond")}<td></td><td></td><td></td><td></td><td></td>`;
+    return `<td class="c blk">${no||""}</td><td>${esc(m.name)}</td><td><div class="two"><div>${esc(m.maker)}</div><div>${esc(m.model)}</div></div></td><td><div class="two"><div>${esc(normYear(m.year))}</div><div>${esc(m.cpu)}</div></div></td>`+
+      L("spec")+L("acc")+L("cond")+
       `<td>${esc(m.serial)}</td><td class="c">${esc(m.manual)}</td><td class="c">${esc(m.want)}</td><td class="c">${esc(m.op)}</td><td class="r">${yen(m.price)}</td>`;
   }
-  function siteHtml(d){
-    const notes=str(d.siteNotes);
-    const items=[...lines(notes),...(d.siteChips||[]).filter(c=>!notes.includes(c))];
+  function siteItems(d){const notes=str(d.siteNotes);return [...lines(notes),...(d.siteChips||[]).filter(c=>!notes.includes(c))]}
+  function siteBox(items,title,more){
     const half=Math.ceil(items.length/2);
-    return `<table class="site"><tr><th>現場状況・搬出条件</th></tr><tr><td><div class="cols"><div>${items.slice(0,half).map(li).join("")}</div><div>${items.slice(half).map(li).join("")}</div></div></td></tr></table>`;
+    return `<table class="site"><tr><th>${title}</th></tr><tr><td><div class="cols"><div>${items.slice(0,half).map(li).join("")}</div><div>${items.slice(half).map(li).join("")}</div></div>${more?'<div class="more">→ 続きは次のページ</div>':""}</td></tr></table>`;
   }
+  const REF_BOX=`<table class="site"><tr><th>現場状況・搬出条件</th></tr><tr><td class="ref">※現場状況は1枚目に記載してあります</td></tr></table>`;
 
-  // 全ページ同じ枠組み（ヘッダー＋機械表＋現場状況欄）。現場状況は1枚目のみ記載、
-  // 入りきらない機械を2枚目以降へ送り、余白は空欄ブロックで埋めて高さをそろえる。
+  // 全ページ同じ枠組み（ヘッダー＋機械表＋現場状況欄）。
+  // ・現場状況は1枚目。入りきらない分だけ次のページの現場状況欄に「（続き）」として送る
+  // ・機械は丸ごと入らなければ次のページへ。空のページにも入らないほど長い機械は、仕様などの行を分けて続きを次のページへ
+  // ・余白は空欄ブロックで埋めて高さをそろえる
   function buildPages(){
-    const d=collect();
-    const work=$("#measure"); work.innerHTML="";
-    const pages=[];
-    const SITE_MIN=90;
-    const over=el=>el.scrollHeight>PAGE_H+1;
+    const d=collect(), work=$("#measure"); work.innerHTML="";
+    const pages=[], SITE_MIN=90, LIMIT=PAGE_H-2, over=el=>el.scrollHeight>LIMIT;
+    let siteRest=siteItems(d);
     function newPage(){
       const first=pages.length===0;
       const el=document.createElement("div"); el.className="sheet measuring";
-      el.innerHTML=`<div class="ttl"><b>下見シート</b><span class="pg"></span></div>`+headerHtml(d)+
-        `<table class="mt">${MT_HEAD}<tbody></tbody></table>`+
-        (first?siteHtml(d):`<table class="site"><tr><th>現場状況・搬出条件</th></tr><tr><td class="ref">※現場状況は1枚目に記載してあります</td></tr></table>`);
+      el.innerHTML=`<div class="ttl"><b>下見シート</b><span class="pg"></span></div>`+headerHtml(d)+`<table class="mt">${MT_HEAD}<tbody></tbody></table><div class="sitebox"></div>`;
       work.appendChild(el);
-      const pg={el,tbody:$(".mt tbody",el),siteTd:$(".site td",el)}; pages.push(pg); return pg;
+      const sb=$(".sitebox",el), title=first?"現場状況・搬出条件":"現場状況・搬出条件（続き）";
+      const hasSite=first||siteRest.length>0;
+      if(!hasSite){sb.innerHTML=REF_BOX}
+      else{
+        const items=siteRest; sb.innerHTML=siteBox(items,title,false); siteRest=[];
+        if(over(el)&&items.length>1){
+          let lo=1,hi=items.length-1,k=1;
+          while(lo<=hi){const mid=(lo+hi)>>1;sb.innerHTML=siteBox(items.slice(0,mid),title,true);if(over(el))hi=mid-1;else{k=mid;lo=mid+1}}
+          sb.innerHTML=siteBox(items.slice(0,k),title,true); siteRest=items.slice(k);
+        }
+      }
+      const pg={el,hasSite,tbody:$(".mt tbody",el),siteTd:$(".site td",el)}; pages.push(pg); return pg;
     }
     const mkRow=html=>{const tr=document.createElement("tr");tr.className="mrow";tr.innerHTML=html;return tr};
+    // 現場状況の載っていないページで機械表に使える高さ
+    const tmp=document.createElement("div"); tmp.className="sheet measuring";
+    tmp.innerHTML=`<div class="ttl"><b>下見シート</b><span class="pg"></span></div>`+headerHtml(d)+`<table class="mt">${MT_HEAD}<tbody></tbody></table>`+REF_BOX;
+    work.appendChild(tmp); const REF_AVAIL=LIMIT-tmp.scrollHeight; tmp.remove();
     let pg=newPage();
+    const tryRow=html=>{const tr=mkRow(html);pg.tbody.appendChild(tr);if(over(pg.el)){tr.remove();return false}return true};
     d.machines.forEach((m,i)=>{
-      const tr=mkRow(machineRow(m,i+1));
-      pg.tbody.appendChild(tr);
-      if(over(pg.el)&&pg.tbody.rows.length>1){tr.remove();pg=newPage();pg.tbody.appendChild(tr)}
+      const no=i+1, L=Math.max(lines(m.spec).length,lines(m.acc).length,lines(m.cond).length);
+      let a=0, cont=false;
+      for(let guard=0;guard<500;guard++){
+        if(tryRow(machineRow(m,no,a,Infinity,cont))) return;
+        // ほかの行があるページなら次のページで試す
+        if(pg.tbody.rows.length>0){pg=newPage();continue}
+        // 現場状況が載っているページ：次のページなら丸ごと入る、またはここに1行も入らない → 次のページへ
+        if(pg.hasSite){
+          const tr=mkRow(machineRow(m,no,a,Infinity,cont)); pg.tbody.appendChild(tr); const h=tr.offsetHeight; tr.remove();
+          if(h<=REF_AVAIL||!tryRow(machineRow(m,no,a,a+1,cont))){pg=newPage();continue}
+          pg.tbody.lastElementChild.remove();
+        }
+        // 空のページにも入らない → 入るところまでで区切り、続きを次のページへ
+        let lo=1,hi=Math.max(1,L-a),k=0;
+        while(lo<=hi){const mid=(lo+hi)>>1;if(tryRow(machineRow(m,no,a,a+mid,cont))){pg.tbody.lastElementChild.remove();k=mid;lo=mid+1}else hi=mid-1}
+        k=Math.max(1,k);
+        pg.tbody.appendChild(mkRow(machineRow(m,no,a,a+k,cont)));
+        a+=k; cont=true;
+        if(a>=L) return;
+        pg=newPage();
+      }
     });
+    while(siteRest.length) pg=newPage();
     pages.forEach(p=>{
       for(;;){const tr=mkRow(machineRow(null,""));p.tbody.appendChild(tr);if(over(p.el)){tr.remove();break}}
-      const left=PAGE_H-p.el.scrollHeight;
+      const left=LIMIT-p.el.scrollHeight;
       if(left>0) p.siteTd.style.height=(Math.max(SITE_MIN,p.siteTd.offsetHeight)+left)+"px";
     });
     pages.forEach((p,i)=>{p.el.classList.remove("measuring");$(".pg",p.el).textContent=`${i+1} / ${pages.length}`});
@@ -765,6 +847,7 @@
   $("#pvShare").addEventListener("click",()=>open("outputMenu"));
 
   /* ---------- 写真（縮小してIndexedDBに保存・札付け） ---------- */
+  const PHOTO_ENABLED=false; // 写真機能は一時停止中（LINEアルバムで管理）。再開時に true
   const KINDS=["全景","銘板・プレート","操作盤・CPU","付属品","状態・キズ","手書きシート","搬出経路","周辺・その他"];
   const DETAIL=new Set(["銘板・プレート","操作盤・CPU","手書きシート"]);
   const LOWPRI=new Set(["搬出経路","周辺・その他"]);
@@ -921,7 +1004,7 @@
     toast("この端末は共有に未対応のため、保存しました"); return true;
   }
   $("#readyShare").addEventListener("click",()=>{close("readyMenu");if(pending){const p=pending;pending=null;shareFiles(p.files,p.title)}});
-  const outTarget=()=>segVal($("#outTarget"))||"sheet";
+  const outTarget=()=>PHOTO_ENABLED?(segVal($("#outTarget"))||"sheet"):"sheet";
   $("#outShare").addEventListener("click",async()=>{
     const t=outTarget(); close("outputMenu");
     const blob=await makePdf(t); if(!blob) return;
@@ -984,7 +1067,7 @@
     await sheets(mid); await sheets(low);
     return out;
   }
-  const SCHEMA_HINT=`{"konNo":"高コン番号","inspectDate":"YYYY-MM-DD","clientCompany":"","clientPerson":"","siteName":"現場名","sitePerson":"","siteAddress":"","siteTel":"","workpiece":"加工物","reason":"","carryOutTiming":"","siteNotes":"現場状況・搬出条件（1行1項目）","machines":[{"no":1,"name":"機械名","maker":"メーカー","model":"型式","year":"YYYY-MM","cpu":"NC装置","serial":"機械番号","spec":"仕様（1行1項目）","acc":"付属品（1行1項目）","cond":"機械状態（1行1項目）","manual":"有 か 無","op":"動作確認 ○ か △ か ×"}]}`;
+  const SCHEMA_HINT=`{"konNo":"高コン番号","inspectDate":"YYYY-MM-DD","clientCompany":"","clientPerson":"","siteName":"現場名","sitePerson":"","siteAddress":"","siteTel":"","workpiece":"加工物","reason":"","carryOutTiming":"","siteNotes":"現場状況・搬出条件（1行1項目）","machines":[{"no":1,"name":"機械名","maker":"メーカー","model":"型式","year":"YYYY.M（月が不明なら YYYY）","cpu":"NC装置","serial":"機械番号","spec":"仕様（1行1項目）","acc":"付属品（1行1項目）","cond":"機械状態（1行1項目）","manual":"有 か 無","op":"動作確認 ○ か △ か ×"}]}`;
   function batchPrompt(b,B,imgs){
     const d=collect(), cur={};
     KEYS.forEach(k=>{if(d[k])cur[k]=d[k]});
@@ -1032,8 +1115,10 @@
   /* ---------- AI取込（追加・更新） ---------- */
   const isEmptyCard=c=>MKEYS.every(k=>!$(`[data-m="${k}"]`,c).value.trim())&&MSEGS.every(k=>!segVal($(`[data-mseg="${k}"]`,c)));
   function addLines(el,v){
-    const cur=lines(el.value), add=lines(v).filter(x=>!cur.includes(x));
-    if(add.length) el.value=[...str(el.value).split("\n").filter(x=>x.trim()),...add].join("\n");
+    const cur=lines(el.value), add=lines(v).filter((x,i,a)=>!cur.includes(x)&&a.indexOf(x)===i);
+    if(!add.length) return;
+    const base=str(el.value).replace(/\s+$/,"");
+    el.value=(base?base+"\n":"")+add.join("\n");
   }
   function mergeData(d){
     if(!d||typeof d!=="object"||Array.isArray(d)) throw new Error("JSONの形式が正しくありません（{ } のオブジェクトが必要です）");
@@ -1054,8 +1139,8 @@
       MKEYS.forEach(k=>{
         const el=$(`[data-m="${k}"]`,c); let v=str(m[k]).trim(); if(!v) return;
         if(k==="spec"||k==="acc"||k==="cond"){addLines(el,v);return}
-        if(k==="year"){v=normMonth(v);if(!v)return}
-        if(k==="price"){v=v.replace(/[^\d]/g,"");if(!v)return}
+        if(k==="year"){v=normYear(v);if(!v)return}
+        if(k==="price"){v=normPrice(v);if(!v)return}
         el.value=v;
       });
       MSEGS.forEach(k=>{const v=normMark(k,m[k]);if(v)setSeg($(`[data-mseg="${k}"]`,c),v)});
@@ -1063,9 +1148,11 @@
     });
     refreshAddMno();
   }
-  $("#aiApply").addEventListener("click",()=>{
+  $("#aiApply").addEventListener("click",async()=>{
     try{
       const d=parseAiText($("#aiText").value), mode=segVal($("#aiMode"))||"merge";
+      if(!d||typeof d!=="object"||Array.isArray(d)) throw new Error("{ } で始まるJSONを貼ってください");
+      if(mode==="replace"&&!await ask("今の入力を、貼り付けた内容ですべて置き換えますか？","置き換える")) return;
       if(mode==="replace") restore(d); else mergeData(d);
       saveDraft(); close("aiMenu"); $("#aiText").value="";
       toast(mode==="replace"?"AIのデータで置き換えました":"AIのデータを追加・更新しました");
@@ -1075,7 +1162,7 @@
   /* ---------- 起動 ---------- */
   if(!loadDraft()) addMachine();
   refreshAddMno();
-  DB.all().then(a=>{photos=Array.isArray(a)?a:[];renderPhotos()}).catch(()=>toast("写真の保存領域を開けませんでした"));
+  if(PHOTO_ENABLED&&window.indexedDB) DB.all().then(a=>{photos=Array.isArray(a)?a:[];renderPhotos()}).catch(()=>{});
   window.SitamiTool={collect,restore,mergeData,buildPages,makePdf,buildAiImages,batchPrompt,
     listPhotos:()=>sortedPhotos().map((p,i)=>({no:i+1,id:p.id,mno:p.mno,kind:p.kind,memo:p.memo,use:p.use})),addFiles};
 })();
