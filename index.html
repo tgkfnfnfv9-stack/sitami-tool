@@ -722,7 +722,12 @@
   /* ---------- プレビュー ---------- */
   function fitPreview(){
     const w=$("#pvPages").clientWidth;
-    $$("#pvPages .pv-sheetwrap").forEach(wr=>{const s=$(".sheet",wr);const k=wr.classList.contains("full")?1:Math.min(1,w/1123);s.style.zoom=k});
+    // zoomだとiPhoneのSafariで1pxの罫線が消えるため、transformで縮小し外枠の高さを合わせる
+    $$("#pvPages .pv-sheetwrap").forEach(wr=>{
+      const s=$(".sheet",wr), full=wr.classList.contains("full"), k=full?1:Math.min(1,w/1123);
+      s.style.transformOrigin="0 0"; s.style.transform=k<1?`scale(${k})`:"";
+      wr.style.height=k<1?Math.ceil(794*k)+"px":""; wr.style.overflow=k<1?"hidden":"auto";
+    });
   }
   $("#btnPreview").addEventListener("click",()=>{
     const els=buildPages(), host=$("#pvPages"); host.innerHTML="";
