@@ -87,7 +87,9 @@
   .m-title{flex:1;min-width:0;font-size:13px;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
   .m-title .sub{font-weight:500;color:var(--sumi-soft);font-size:12px;margin-left:6px}
   .m-badges{display:flex;gap:4px;flex:0 0 auto}
-  .badge{font-size:11px;font-weight:800;width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;border:1.5px solid var(--keisen-strong);color:var(--keisen-strong)}
+  .badge{font-size:11px;font-weight:800;height:22px;padding:0 7px;border-radius:11px;display:flex;align-items:center;gap:3px;border:1.5px solid var(--keisen-strong);color:var(--sumi-soft);white-space:nowrap;background:#fff}
+  .badge small{font-size:9.5px;font-weight:700}
+  .badge:empty{display:none}
   .badge.ok{border-color:var(--ok);color:var(--ok)}
   .badge.warn{border-color:var(--warn);color:var(--warn)}
   .badge.ng{border-color:var(--ng);color:var(--ng)}
@@ -414,7 +416,7 @@
     <div class="m-head">
       <span class="m-no">1</span>
       <span class="m-title"></span>
-      <span class="m-badges"><span class="badge" data-badge="want">−</span><span class="badge" data-badge="op">−</span></span>
+      <span class="m-badges"><span class="badge" data-badge="want"></span><span class="badge" data-badge="op"></span></span>
       <span class="chev">▼</span>
       <button class="m-del" type="button" aria-label="この機械を削除">×</button>
     </div>
@@ -565,7 +567,7 @@
     const n=$('[data-m="name"]',c).value, mk=$('[data-m="maker"]',c).value, md=$('[data-m="model"]',c).value;
     $(".m-title",c).innerHTML=n?esc(n)+'<span class="sub">'+esc([mk,md].filter(Boolean).join(" "))+'</span>':'<span class="sub" style="margin:0">未入力</span>';
     const cls={"○":"ok","△":"warn","×":"ng"};
-    ["want","op"].forEach(k=>{const v=segVal($(`[data-mseg="${k}"]`,c)),bd=$(`[data-badge="${k}"]`,c);bd.textContent=v||"−";bd.className="badge "+(cls[v]||"");bd.title=k==="want"?"欲しい":"動作確認"});
+    ["want","op"].forEach(k=>{const v=segVal($(`[data-mseg="${k}"]`,c)),bd=$(`[data-badge="${k}"]`,c),lb=k==="want"?"欲しい":"動作";bd.innerHTML=v?`<small>${lb}</small>${v}`:"";bd.className="badge "+(cls[v]||"")});
   }
   function addMachine(data){
     const c=$("#tplMachine").content.firstElementChild.cloneNode(true);
